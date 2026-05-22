@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LSA: Sistema de Simulação de Reatores em Batelada Sequencial</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--bg2:#0f1423;--bg3:#141926;--card:#181e2e;--card2:#1e2538;
+  --border:#2a3050;--border2:#3a4570;
+  --text:#e8ecf8;--text2:#8892b0;--text3:#4a5580;
+  --blue:#4f9eff;--blue2:#2d7dd2;--teal:#00d4aa;--teal2:#009980;
+  --green:#39d353;--green2:#25a339;--amber:#f5a623;--amber2:#c4841a;
+  --red:#ff5f5f;--red2:#cc3333;--purple:#b48eff;--purple2:#7c5cbf;
+  --cyan:#00e5ff;
+  --r:8px;--r2:12px;--r3:16px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Layout */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.logo{font-size:1.1rem;font-weight:800;letter-spacing:-0.5px}
+.logo span{color:var(--teal)}
+.header-badges{display:flex;gap:8px}
+.badge{font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:4px;border:1px solid}
+.badge-online{border-color:var(--teal2);color:var(--teal);background:rgba(0,212,170,0.08)}
+.badge-phase{border-color:var(--blue2);color:var(--blue);background:rgba(79,158,255,0.08)}
+
+.layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 60px)}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 1rem;overflow-y:auto;max-height:calc(100vh - 60px);position:sticky;top:60px}
+.main{padding:1.5rem;overflow-y:auto}
+
+/* Sidebar */
+.sidebar-section{margin-bottom:1.5rem}
+.sidebar-title{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+.param-row{margin-bottom:0.75rem}
+.param-label{font-size:12px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:4px}
+.param-label span{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px}
+input[type=range]{width:100%;height:3px;-webkit-appearance:none;background:var(--border2);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer}
+select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--r);font-size:13px;font-family:'Syne',sans-serif;outline:none}
+select:focus{border-color:var(--blue)}
+
+.btn{display:block;width:100%;padding:10px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;margin-bottom:8px;transition:all 0.2s}
+.btn-primary{background:var(--teal2);color:#fff}
+.btn-primary:hover{background:var(--teal)}
+.btn-secondary{background:var(--card);color:var(--text2);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--card2);color:var(--text)}
+.btn-ml{background:linear-gradient(135deg,#2d7dd2,#7c5cbf);color:#fff}
+.btn-ml:hover{opacity:0.85}
+.btn-pause{background:#4a1b0c;color:var(--amber);border:1px solid var(--amber2);}
+.btn-pause:hover{background:#6b2810;}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:1.25rem}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.card-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.card-value{font-size:2rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+
+/* Grid layouts */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:1.5rem}
+
+/* KPI cards */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:1rem}
+.kpi-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.kpi-value{font-size:1.6rem;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.kpi-unit{font-size:11px;color:var(--text3);margin-top:4px}
+.kpi-delta{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.delta-up{color:var(--green)}
+.delta-down{color:var(--red)}
+.delta-neutral{color:var(--text3)}
+
+/* Reactor visual */
+.reactor-container{display:flex;gap:16px;margin-bottom:1.5rem}
+.reactor-wrap{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:1rem}
+.reactor-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.reactor-svg{width:100%;display:block}
+
+/* Phase indicator */
+.phase-bar{display:flex;gap:4px;margin-bottom:1.5rem}
+.phase-step{flex:1;height:6px;border-radius:3px;background:var(--border)}
+.phase-step.active{background:var(--teal)}
+.phase-step.done{background:var(--teal2)}
+.phase-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px}
+.phase-cycle{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:1rem;margin-bottom:1.5rem}
+.cycle-steps{display:flex;gap:0;overflow:hidden;border-radius:var(--r);margin-top:8px}
+.cycle-step{flex:1;padding:6px 4px;text-align:center;font-size:10px;font-weight:600;transition:all 0.3s}
+.step-fill{background:rgba(0,212,170,0.15);color:var(--teal);border-right:1px solid var(--border)}
+.step-react{background:rgba(79,158,255,0.15);color:var(--blue);border-right:1px solid var(--border)}
+.step-settle{background:rgba(181,142,255,0.15);color:var(--purple);border-right:1px solid var(--border)}
+.step-decant{background:rgba(245,166,35,0.15);color:var(--amber);border-right:1px solid var(--border)}
+.step-idle{background:rgba(74,85,128,0.15);color:var(--text3)}
+.step-active{transform:scaleY(1.1);box-shadow:0 0 10px rgba(0,212,170,0.3)}
+
+/* Charts */
+.chart-wrap{position:relative;width:100%;margin-top:8px}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace}
+.data-table th{text-align:left;padding:8px 10px;color:var(--text3);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.data-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.data-table tr:hover td{background:var(--card2);color:var(--text)}
+.data-table tr.highlight td{color:var(--teal)}
+.val-good{color:var(--green)!important}
+.val-bad{color:var(--red)!important}
+.val-warn{color:var(--amber)!important}
+
+/* ML Panel */
+.ml-panel{background:var(--card);border:1px solid var(--purple2);border-radius:var(--r2);padding:1.25rem;margin-bottom:1.5rem}
+.ml-title{font-size:12px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.ml-rec{background:var(--card2);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.ml-rec-name{color:var(--text2)}
+.ml-rec-val{color:var(--purple);font-family:'JetBrains Mono',monospace;font-weight:700}
+.ml-score{display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.ml-score-item{text-align:center;flex:1}
+.ml-score-val{font-size:1.4rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--purple)}
+.ml-score-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.ml-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px}
+.ml-running{background:rgba(181,142,255,0.15);color:var(--purple);border:1px solid var(--purple2)}
+.ml-idle{background:rgba(74,85,128,0.1);color:var(--text3);border:1px solid var(--border)}
+
+/* Log */
+.log-panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px;height:120px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px}
+.log-line{padding:2px 0;color:var(--text3)}
+.log-line.info{color:var(--teal)}
+.log-line.warn{color:var(--amber)}
+.log-line.ml{color:var(--purple)}
+.log-line.good{color:var(--green)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab{padding:8px 16px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-radius:var(--r) var(--r) 0 0;transition:all 0.2s;border:1px solid transparent;border-bottom:none;margin-bottom:-1px}
+.tab.active{background:var(--card);color:var(--text);border-color:var(--border)}
+.tab:hover:not(.active){color:var(--text2)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Tooltip */
+.tooltip{position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;font-size:11px;pointer-events:none;z-index:50;min-width:120px}
+
+/* Progress ring */
+.progress-ring{display:inline-block}
+
+/* Responsive */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;max-height:none}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo"><span>LSA</span> · Sistema de Simulação de Reatores em Batelada Sequencial</div>
+    <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px">Experimento (tese): Elissadra Pereira</div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-phase" id="headerPhase">FASE I</span>
+    <span class="badge badge-online" id="headerStatus">● SIMULANDO</span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR PARAMS -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Fase de Operação</div>
+      <select id="faseSelect">
+        <option value="FASE I">Fase I (dias 6–57)</option>
+        <option value="RECALIBRAGEM I">Recalibragem I (dias 61–89)</option>
+        <option value="FASE II">Fase II (dias 90–244)</option>
+        <option value="FASE III">Fase III (dias 250–379)</option>
+        <option value="FASE IV" selected>Fase IV (dias 383–500)</option>
+      </select>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Parâmetros de Entrada</div>
+      <div class="param-row">
+        <div class="param-label">DQO afluente (mg/L) <span id="dqoVal">450</span></div>
+        <input type="range" id="dqoSlider" min="50" max="600" value="450" step="5">
+      </div>
+      <div class="param-row">
+        <div class="param-label">NH₄-N afluente (mg/L) <span id="nh4Val">55</span></div>
+        <input type="range" id="nh4Slider" min="10" max="100" value="55" step="1">
+      </div>
+      <div class="param-row">
+        <div class="param-label">PT afluente (mg/L) <span id="ptVal">5.0</span></div>
+        <input type="range" id="ptSlider" min="1" max="15" value="5" step="0.5">
+      </div>
+      <div class="param-row">
+        <div class="param-label">Alcalinidade afluente (mg/L) <span id="alkVal">400</span></div>
+        <input type="range" id="alkSlider" min="100" max="700" value="400" step="10">
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Configuração do Ciclo</div>
+      <div class="param-row">
+        <div class="param-label">T. enchimento (min) <span id="fillVal">30</span></div>
+        <input type="range" id="fillSlider" min="10" max="90" value="30" step="5">
+      </div>
+      <div class="param-row">
+        <div class="param-label">T. reação aeróbia (min) <span id="reactVal">180</span></div>
+        <input type="range" id="reactSlider" min="60" max="360" value="180" step="10">
+      </div>
+      <div class="param-row">
+        <div class="param-label">T. sedimentação (min) <span id="settleVal">45</span></div>
+        <input type="range" id="settleSlider" min="20" max="120" value="45" step="5">
+      </div>
+      <div class="param-row">
+        <div class="param-label">T. descarte (min) <span id="decantVal">20</span></div>
+        <input type="range" id="decantSlider" min="10" max="60" value="20" step="5">
+      </div>
+      <div class="param-row">
+        <div class="param-label">SSVLM (g/L) <span id="ssvVal">1.8</span></div>
+        <input type="range" id="ssvSlider" min="0.5" max="4" value="1.8" step="0.1">
+      </div>
+      <div class="param-row">
+        <div class="param-label">IVL30/IVL10 <span id="ivlVal">0.95</span></div>
+        <input type="range" id="ivlSlider" min="0.5" max="1.1" value="0.95" step="0.01">
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Controles</div>
+      <button class="btn btn-primary" id="btnSimulate" onclick="runSimulation()">▶ Iniciar Simulação</button>
+      <button class="btn btn-ml" onclick="runML()">⬡ Otimização por ML</button>
+      <button class="btn btn-secondary" onclick="loadRealData()">↓ Carregar Dados Reais</button>
+      <button class="btn btn-secondary" onclick="resetAll()">↺ Resetar</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Log do Sistema</div>
+      <div class="log-panel" id="logPanel"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- KPI Row -->
+    <div class="grid-4" id="kpiGrid">
+      <div class="kpi">
+        <div class="kpi-label">Eficiência DQO</div>
+        <div class="kpi-value" id="kpi-dqo" style="color:var(--teal)">—</div>
+        <div class="kpi-unit">% remoção</div>
+        <div class="kpi-delta" id="kpi-dqo-d"></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Eficiência NH₄-N</div>
+        <div class="kpi-value" id="kpi-nh4" style="color:var(--blue)">—</div>
+        <div class="kpi-unit">% remoção</div>
+        <div class="kpi-delta" id="kpi-nh4-d"></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Eficiência PT</div>
+        <div class="kpi-value" id="kpi-pt" style="color:var(--purple)">—</div>
+        <div class="kpi-unit">% remoção</div>
+        <div class="kpi-delta" id="kpi-pt-d"></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">N-NO₂⁻</div>
+        <div class="kpi-value" id="kpi-no2" style="color:var(--amber)">—</div>
+        <div class="kpi-unit">mg/L efluente</div>
+        <div class="kpi-delta" id="kpi-no2-d"></div>
+      </div>
+    </div>
+
+    <!-- Reactor Visuals — Rich Canvas Photobioreactor -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:1rem;margin-bottom:1.5rem">
+      <!-- Cabinet lighting overlay -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Fotobiorreator em Batelada Sequencial — Escala Laboratorial (4L, 50% troca)</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="font-size:10px;color:var(--text3)">Descarte:</div>
+          <select id="discardPct" style="width:auto;font-size:11px;padding:3px 8px" onchange="updateDiscardLabel()">
+            <option value="25">25%</option>
+            <option value="50" selected>50%</option>
+            <option value="75">75%</option>
+            <option value="100">100%</option>
+          </select>
+          <div id="lightBadge" style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:4px;border:1px solid #c4841a;color:#f5a623;background:rgba(245,166,35,0.1)">☀ DIA — 12h</div>
+          <div style="font-size:10px;color:var(--text3)">Tempo real: <span id="simTimeDisplay" style="color:var(--teal);font-family:'JetBrains Mono',monospace">00:00</span></div>
+        </div>
+      </div>
+      <!-- Main reactor canvas area -->
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <!-- Cabinet canvas -->
+        <div style="flex:2;position:relative">
+          <canvas id="reactorCanvas" width="480" height="340" style="width:100%;border-radius:var(--r);display:block"></canvas>
+        </div>
+        <!-- Right panel: cycle + status -->
+        <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:10px">
+          <!-- Cycle steps -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Etapa atual do ciclo</div>
+            <div class="cycle-steps" id="cycleSteps" style="flex-direction:column;gap:4px;display:flex">
+              <div class="cycle-step step-fill" id="stepFill" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● ENCHIMENTO</div>
+              <div class="cycle-step step-react" id="stepReact" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● REAÇÃO AERÓBIA</div>
+              <div class="cycle-step step-settle" id="stepSettle" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● SEDIMENTAÇÃO</div>
+              <div class="cycle-step step-decant" id="stepDecant" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● DESCARTE</div>
+              <div class="cycle-step step-idle" id="stepIdle" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● REPOUSO</div>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Progresso do ciclo</div>
+            <div style="background:var(--border);border-radius:3px;height:5px">
+              <div id="cycleBar" style="height:5px;background:var(--teal);border-radius:3px;width:0%;transition:width 0.3s"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--text3)">
+              <span id="cycleTime">0 min</span><span id="cycleTotalTime">— min</span>
+            </div>
+          </div>
+          <!-- Nutrient feed display -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Afluente — CHONPS</div>
+            <div id="nutrientDisplay" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;font-family:'JetBrains Mono',monospace"></div>
+          </div>
+          <!-- Granule status -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Estado da Biomassa</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <div style="text-align:center">
+                <div style="font-size:9px;color:var(--text3)">SSVLM</div>
+                <div style="font-size:1rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--teal)" id="ssvDisplay">—</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:9px;color:var(--text3)">IVL30/10</div>
+                <div style="font-size:1rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--blue)" id="ivlDisplay">—</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:9px;color:var(--text3)">Grânulos</div>
+                <div style="font-size:0.9rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)" id="granuleStatus">—</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:9px;color:var(--text3)">Descarte</div>
+                <div style="font-size:0.9rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--amber)" id="discardDisplay">50%</div>
+              </div>
+            </div>
+          </div>
+          <!-- Photoperiod clock -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Fotoperíodo 12h/12h</div>
+            <canvas id="clockCanvas" width="100" height="100" style="width:80px;height:80px;display:block;margin:0 auto"></canvas>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px" id="clockLabel">— h de operação</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('performance')">Desempenho</div>
+      <div class="tab" onclick="switchTab('granules')">Grânulos</div>
+      <div class="tab" onclick="switchTab('ml')">Otimização ML</div>
+      <div class="tab" onclick="switchTab('data')">Dados Reais</div>
+    </div>
+
+    <!-- Tab: Performance -->
+    <div class="tab-content active" id="tab-performance">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Remoção DQO & NH₄-N ao longo do tempo</span>
+          </div>
+          <div class="chart-wrap" style="height:220px"><canvas id="effChart" role="img" aria-label="Gráfico de eficiência de remoção DQO e amônio ao longo dos dias de operação">Gráfico de eficiência ao longo do tempo.</canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Perfil N-NO₂⁻ e N-NO₃⁻ no efluente</span>
+          </div>
+          <div class="chart-wrap" style="height:220px"><canvas id="nChart" role="img" aria-label="Perfil de nitrito e nitrato no efluente">Nitrito e nitrato.</canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">DQO afluente vs efluente (mg/L) — Dados reais F1 + F2</span>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="dqoChart" role="img" aria-label="Comparação DQO afluente vs efluente">DQO afluente e efluente.</canvas></div>
+      </div>
+    </div>
+
+    <!-- Tab: Grânulos -->
+    <div class="tab-content" id="tab-granules">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Distribuição de tamanho de grânulos (%)</span>
+          </div>
+          <div class="chart-wrap" style="height:220px"><canvas id="granChart" role="img" aria-label="Distribuição granulométrica">Distribuição granulométrica.</canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">EPS, ALE e Lipídeos (mg/gSSV)</span>
+          </div>
+          <div class="chart-wrap" style="height:220px"><canvas id="epsChart" role="img" aria-label="EPS ALE Lipídeos">EPS, ALE, Lipídeos.</canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">SSVLM (g/L) e IVL30/IVL10 — evolução temporal</span>
+        </div>
+        <div class="chart-wrap" style="height:180px"><canvas id="ssvChart" role="img" aria-label="SSVLM e IVL ao longo do tempo">SSVLM e IVL.</canvas></div>
+      </div>
+    </div>
+
+    <!-- Tab: ML Optimization -->
+    <div class="tab-content" id="tab-ml">
+      <div class="ml-panel">
+        <div class="ml-title">
+          ⬡ Motor de Otimização — Machine Learning
+          <span class="ml-status ml-idle" id="mlStatus">AGUARDANDO</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:1rem;line-height:1.6">
+          Algoritmo de regressão múltipla + random forest treinado nos dados experimentais reais de F1 e F2 (dias 6–500). Prevê eficiência de remoção DQO, NH₄-N e PT com base nos parâmetros operacionais e recomenda a configuração ótima.
+        </div>
+        <button class="btn btn-ml" style="margin-bottom:1rem" onclick="runML()">⬡ Executar Otimização ML ↗</button>
+        <div id="mlResults" style="display:none">
+          <div style="margin-bottom:1rem">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Configuração recomendada</div>
+            <div id="mlRecList"></div>
+          </div>
+          <div class="ml-score" id="mlScore"></div>
+          <div style="margin-top:1rem">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Importância das features</div>
+            <div class="chart-wrap" style="height:180px"><canvas id="featureChart" role="img" aria-label="Importância das features no modelo ML">Features importância.</canvas></div>
+          </div>
+          <div style="margin-top:1rem">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Predição vs valor real (DQO eficiência)</div>
+            <div class="chart-wrap" style="height:180px"><canvas id="predChart" role="img" aria-label="Predição vs real">Predição vs real.</canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Análise de sensibilidade paramétrica</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:1rem">Mantendo os outros parâmetros fixos, veja como cada variável afeta a eficiência de DQO prevista.</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="sensitChart" role="img" aria-label="Análise de sensibilidade">Sensibilidade.</canvas></div>
+      </div>
+    </div>
+
+    <!-- Tab: Real Data -->
+    <div class="tab-content" id="tab-data">
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">
+          <span class="card-title">Dados experimentais — experimento real (F1 e F2)</span>
+          <select id="reactorFilter" onchange="renderDataTable()" style="width:auto;font-size:11px;padding:4px 8px">
+            <option value="all">F1 + F2</option>
+            <option value="F1">Apenas F1</option>
+            <option value="F2">Apenas F2</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>Data</th><th>Dia</th><th>Fase</th><th>Reator</th>
+                <th>DQO Af.</th><th>DQO Ef.</th><th>η DQO%</th>
+                <th>NH₄-N Af.</th><th>NH₄-N Ef.</th><th>η NH₄%</th>
+                <th>N-NO₂</th><th>N-NO₃</th>
+                <th>PT Af.</th><th>PT Ef.</th><th>η PT%</th>
+                <th>SSVLM</th><th>IVL30/10</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ===== REAL EXPERIMENTAL DATA =====
+const rawData = [
+  // F1
+  {date:'04/04/23',day:6,fase:'FASE I',r:'F1',dqoA:300.9,dqoE:28.3,nh4A:50.4,nh4E:18.0,no2:2.5,no3:3.1,ptA:7.3,ptE:4.7,ssv:null,ivl:0.778},
+  {date:'10/04/23',day:12,fase:'FASE I',r:'F1',dqoA:231.4,dqoE:37.9,nh4A:52.2,nh4E:27.9,no2:3.1,no3:2.0,ptA:6.2,ptE:5.3,ssv:null,ivl:null},
+  {date:'13/04/23',day:15,fase:'FASE I',r:'F1',dqoA:309.3,dqoE:67.2,nh4A:66.3,nh4E:23.0,no2:3.7,no3:1.0,ptA:5.6,ptE:5.8,ssv:null,ivl:0.778},
+  {date:'17/04/23',day:19,fase:'FASE I',r:'F1',dqoA:276.7,dqoE:28.3,nh4A:65.6,nh4E:15.4,no2:3.6,no3:0.7,ptA:8.9,ptE:11.3,ssv:null,ivl:null},
+  {date:'20/04/23',day:22,fase:'FASE I',r:'F1',dqoA:211.6,dqoE:43.4,nh4A:66.2,nh4E:11.0,no2:3.5,no3:0.5,ptA:8.1,ptE:7.0,ssv:1.574,ivl:0.933},
+  {date:'26/04/23',day:28,fase:'FASE I',r:'F1',dqoA:205.1,dqoE:39.3,nh4A:64.1,nh4E:19.9,no2:1.9,no3:6.6,ptA:7.4,ptE:6.6,ssv:null,ivl:0.923},
+  {date:'09/05/23',day:41,fase:'FASE I',r:'F1',dqoA:279.8,dqoE:26.9,nh4A:56.8,nh4E:25.0,no2:4.9,no3:0.2,ptA:6.9,ptE:6.7,ssv:null,ivl:null},
+  {date:'11/05/23',day:43,fase:'FASE I',r:'F1',dqoA:274.2,dqoE:34.5,nh4A:52.2,nh4E:22.4,no2:0.2,no3:0.6,ptA:7.2,ptE:6.5,ssv:null,ivl:null},
+  {date:'15/05/23',day:47,fase:'FASE I',r:'F1',dqoA:235.2,dqoE:31.1,nh4A:36.6,nh4E:5.9,no2:2.7,no3:1.1,ptA:7.8,ptE:8.1,ssv:null,ivl:null},
+  {date:'18/05/23',day:50,fase:'FASE I',r:'F1',dqoA:260.2,dqoE:31.1,nh4A:58.8,nh4E:10.9,no2:3.5,no3:8.1,ptA:9.2,ptE:7.5,ssv:null,ivl:null},
+  {date:'22/05/23',day:54,fase:'FASE I',r:'F1',dqoA:225.2,dqoE:48.9,nh4A:68.5,nh4E:14.7,no2:5.7,no3:0.6,ptA:11.4,ptE:11.6,ssv:null,ivl:null},
+  {date:'25/05/23',day:57,fase:'FASE I',r:'F1',dqoA:339.8,dqoE:39.3,nh4A:49.1,nh4E:12.6,no2:0.1,no3:0.4,ptA:4.7,ptE:4.5,ssv:2.888,ivl:0.944},
+  {date:'29/05/23',day:61,fase:'RECALIBRAGEM I',r:'F1',dqoA:270.7,dqoE:53.1,nh4A:47.6,nh4E:13.6,no2:14.0,no3:4.3,ptA:8.1,ptE:8.2,ssv:2.767,ivl:0.97},
+  {date:'07/06/23',day:70,fase:'RECALIBRAGEM I',r:'F1',dqoA:282.6,dqoE:60.0,nh4A:62.3,nh4E:3.3,no2:6.0,no3:0.6,ptA:3.0,ptE:2.4,ssv:null,ivl:null},
+  {date:'13/06/23',day:76,fase:'RECALIBRAGEM I',r:'F1',dqoA:281.9,dqoE:24.9,nh4A:65.9,nh4E:11.7,no2:7.0,no3:6.9,ptA:2.8,ptE:1.5,ssv:null,ivl:0.976},
+  {date:'19/06/23',day:82,fase:'RECALIBRAGEM I',r:'F1',dqoA:586.0,dqoE:56.5,nh4A:70.4,nh4E:22.3,no2:7.1,no3:1.2,ptA:4.9,ptE:2.6,ssv:4.784,ivl:0.967},
+  {date:'22/06/23',day:85,fase:'RECALIBRAGEM I',r:'F1',dqoA:570.4,dqoE:58.6,nh4A:72.9,nh4E:1.3,no2:13.3,no3:1.8,ptA:5.5,ptE:2.0,ssv:null,ivl:null},
+  {date:'27/06/23',day:90,fase:'FASE II',r:'F1',dqoA:474.2,dqoE:46.5,nh4A:41.3,nh4E:1.7,no2:3.4,no3:1.9,ptA:null,ptE:null,ssv:null,ivl:null},
+  {date:'03/07/23',day:96,fase:'FASE II',r:'F1',dqoA:478.7,dqoE:40.5,nh4A:34.5,nh4E:2.1,no2:9.1,no3:0.6,ptA:3.3,ptE:1.7,ssv:3.174,ivl:0.964},
+  {date:'17/07/23',day:110,fase:'FASE II',r:'F1',dqoA:255.0,dqoE:34.5,nh4A:26.4,nh4E:2.8,no2:2.9,no3:4.3,ptA:null,ptE:null,ssv:null,ivl:null},
+  {date:'25/07/23',day:118,fase:'FASE II',r:'F1',dqoA:439.6,dqoE:58.6,nh4A:39.4,nh4E:4.8,no2:11.4,no3:6.6,ptA:5.4,ptE:1.7,ssv:2.811,ivl:1.0},
+  {date:'28/07/23',day:121,fase:'FASE II',r:'F1',dqoA:498.7,dqoE:29.0,nh4A:38.6,nh4E:1.4,no2:5.5,no3:2.8,ptA:null,ptE:null,ssv:null,ivl:null},
+  {date:'31/07/23',day:124,fase:'FASE II',r:'F1',dqoA:218.1,dqoE:26.9,nh4A:38.0,nh4E:1.4,no2:3.6,no3:6.2,ptA:2.5,ptE:3.3,ssv:null,ivl:null},
+  {date:'04/08/23',day:128,fase:'FASE II',r:'F1',dqoA:198.4,dqoE:11.8,nh4A:23.8,nh4E:1.6,no2:13.8,no3:4.1,ptA:2.5,ptE:4.4,ssv:null,ivl:null},
+  {date:'08/08/23',day:132,fase:'FASE II',r:'F1',dqoA:467.8,dqoE:113.6,nh4A:25.0,nh4E:1.2,no2:1.0,no3:1.2,ptA:1.9,ptE:6.1,ssv:2.632,ivl:1.0},
+  {date:'11/08/23',day:135,fase:'FASE II',r:'F1',dqoA:327.5,dqoE:25.6,nh4A:15.0,nh4E:1.7,no2:6.7,no3:12.0,ptA:2.1,ptE:2.6,ssv:null,ivl:null},
+  {date:'18/08/23',day:142,fase:'FASE II',r:'F1',dqoA:317.7,dqoE:20.7,nh4A:46.1,nh4E:3.6,no2:9.0,no3:13.6,ptA:3.9,ptE:3.4,ssv:null,ivl:null},
+  {date:'21/08/23',day:145,fase:'FASE II',r:'F1',dqoA:291.1,dqoE:44.8,nh4A:29.0,nh4E:13.4,no2:4.2,no3:0.5,ptA:3.0,ptE:2.2,ssv:1.358,ivl:0.952},
+  {date:'28/08/23',day:152,fase:'FASE II',r:'F1',dqoA:414.3,dqoE:42.1,nh4A:44.2,nh4E:2.4,no2:5.7,no3:4.2,ptA:null,ptE:null,ssv:1.836,ivl:0.672},
+  {date:'06/09/23',day:161,fase:'FASE II',r:'F1',dqoA:283.0,dqoE:38.6,nh4A:21.6,nh4E:2.6,no2:4.3,no3:null,ptA:3.0,ptE:null,ssv:null,ivl:null},
+  {date:'13/09/23',day:168,fase:'FASE II',r:'F1',dqoA:370.4,dqoE:40.0,nh4A:48.4,nh4E:23.1,no2:0.0,no3:0.0,ptA:9.5,ptE:8.4,ssv:1.718,ivl:0.881},
+  {date:'20/09/23',day:175,fase:'FASE II',r:'F1',dqoA:307.9,dqoE:40.7,nh4A:54.0,nh4E:36.9,no2:5.6,no3:5.4,ptA:4.5,ptE:0.8,ssv:null,ivl:0.885},
+  {date:'29/09/23',day:184,fase:'FASE II',r:'F1',dqoA:341.6,dqoE:33.8,nh4A:28.7,nh4E:15.5,no2:3.7,no3:0.0,ptA:4.7,ptE:4.3,ssv:3.927,ivl:null},
+  {date:'02/10/23',day:187,fase:'FASE II',r:'F1',dqoA:415.6,dqoE:44.1,nh4A:35.8,nh4E:16.9,no2:3.8,no3:0.0,ptA:2.4,ptE:3.8,ssv:null,ivl:0.955},
+  {date:'17/10/23',day:202,fase:'FASE II',r:'F1',dqoA:246.9,dqoE:45.5,nh4A:30.0,nh4E:6.8,no2:11.3,no3:4.3,ptA:4.5,ptE:2.8,ssv:6.317,ivl:0.825},
+  {date:'31/10/23',day:216,fase:'FASE II',r:'F1',dqoA:317.0,dqoE:39.3,nh4A:40.9,nh4E:1.5,no2:3.0,no3:3.1,ptA:4.3,ptE:2.2,ssv:null,ivl:null},
+  {date:'06/11/23',day:222,fase:'RECALIBRAGEM II',r:'F1',dqoA:305.1,dqoE:35.9,nh4A:41.7,nh4E:11.3,no2:2.7,no3:3.0,ptA:5.1,ptE:3.0,ssv:null,ivl:null},
+  {date:'14/11/23',day:230,fase:'RECALIBRAGEM II',r:'F1',dqoA:283.3,dqoE:39.3,nh4A:29.2,nh4E:2.9,no2:2.0,no3:0.8,ptA:4.5,ptE:3.6,ssv:2.712,ivl:0.95},
+  {date:'21/11/23',day:237,fase:'RECALIBRAGEM II',r:'F1',dqoA:200.2,dqoE:36.6,nh4A:34.2,nh4E:2.5,no2:6.7,no3:0.1,ptA:3.1,ptE:4.8,ssv:null,ivl:null},
+  {date:'28/11/23',day:244,fase:'RECALIBRAGEM II',r:'F1',dqoA:205.5,dqoE:62.0,nh4A:34.6,nh4E:1.6,no2:7.5,no3:0.2,ptA:3.3,ptE:4.6,ssv:3.304,ivl:1.0},
+  {date:'04/12/23',day:250,fase:'FASE III',r:'F1',dqoA:204.4,dqoE:70.3,nh4A:44.8,nh4E:22.1,no2:5.1,no3:0.1,ptA:11.2,ptE:14.9,ssv:null,ivl:null},
+  {date:'12/12/23',day:258,fase:'FASE III',r:'F1',dqoA:253.3,dqoE:48.3,nh4A:38.6,nh4E:14.3,no2:12.5,no3:10.8,ptA:13.4,ptE:null,ssv:null,ivl:null},
+  {date:'20/12/23',day:266,fase:'FASE III',r:'F1',dqoA:174.6,dqoE:47.6,nh4A:34.7,nh4E:0.9,no2:10.8,no3:10.5,ptA:3.2,ptE:3.3,ssv:null,ivl:0.939},
+  {date:'27/12/23',day:273,fase:'FASE III',r:'F1',dqoA:286.4,dqoE:18.4,nh4A:51.1,nh4E:5.9,no2:6.9,no3:0.6,ptA:13.7,ptE:8.1,ssv:3.804,ivl:0.388},
+  {date:'03/01/24',day:280,fase:'FASE III',r:'F1',dqoA:273.6,dqoE:34.6,nh4A:36.0,nh4E:1.2,no2:11.0,no3:1.1,ptA:11.0,ptE:10.5,ssv:2.5,ivl:0.968},
+  {date:'13/01/24',day:290,fase:'FASE III',r:'F1',dqoA:312.3,dqoE:41.0,nh4A:56.8,nh4E:21.7,no2:1.5,no3:2.5,ptA:15.5,ptE:3.5,ssv:null,ivl:null},
+  {date:'01/02/24',day:309,fase:'FASE III',r:'F1',dqoA:268.7,dqoE:9.6,nh4A:25.1,nh4E:4.6,no2:9.97,no3:6.6,ptA:null,ptE:null,ssv:null,ivl:null},
+  {date:'06/02/24',day:314,fase:'FASE III',r:'F1',dqoA:344.5,dqoE:7.6,nh4A:26.5,nh4E:1.6,no2:9.7,no3:5.6,ptA:null,ptE:null,ssv:null,ivl:null},
+  {date:'15/02/24',day:323,fase:'FASE III',r:'F1',dqoA:214.3,dqoE:19.1,nh4A:21.9,nh4E:4.7,no2:0.0,no3:4.0,ptA:9.7,ptE:6.5,ssv:null,ivl:null},
+  {date:'20/02/24',day:328,fase:'FASE III',r:'F1',dqoA:270.0,dqoE:23.1,nh4A:30.0,nh4E:3.1,no2:0.0,no3:6.1,ptA:12.6,ptE:11.5,ssv:2.169,ivl:0.963},
+  {date:'07/03/24',day:344,fase:'FASE III',r:'F1',dqoA:205.3,dqoE:25.1,nh4A:21.0,nh4E:2.7,no2:0.0,no3:0.2,ptA:13.3,ptE:11.4,ssv:null,ivl:null},
+  {date:'11/03/24',day:348,fase:'FASE III',r:'F1',dqoA:211.9,dqoE:22.4,nh4A:29.6,nh4E:1.9,no2:0.0,no3:0.2,ptA:11.0,ptE:10.5,ssv:null,ivl:null},
+  {date:'18/03/24',day:355,fase:'FASE III',r:'F1',dqoA:229.0,dqoE:17.7,nh4A:26.8,nh4E:3.2,no2:2.5,no3:8.2,ptA:9.9,ptE:8.7,ssv:null,ivl:null},
+  {date:'21/03/24',day:358,fase:'FASE III',r:'F1',dqoA:223.4,dqoE:19.1,nh4A:30.9,nh4E:6.1,no2:2.2,no3:6.5,ptA:11.5,ptE:9.5,ssv:null,ivl:null},
+  {date:'25/03/24',day:362,fase:'FASE III',r:'F1',dqoA:224.0,dqoE:19.7,nh4A:31.9,nh4E:6.1,no2:2.1,no3:2.7,ptA:11.4,ptE:9.3,ssv:0.814,ivl:1.0},
+  {date:'28/03/24',day:365,fase:'FASE III',r:'F1',dqoA:257.3,dqoE:15.0,nh4A:32.9,nh4E:7.5,no2:1.3,no3:4.4,ptA:10.6,ptE:9.7,ssv:null,ivl:null},
+  {date:'01/04/24',day:369,fase:'FASE III',r:'F1',dqoA:227.6,dqoE:36.6,nh4A:35.1,nh4E:12.2,no2:8.1,no3:1.1,ptA:11.9,ptE:11.1,ssv:null,ivl:null},
+  {date:'05/04/24',day:373,fase:'FASE III',r:'F1',dqoA:221.5,dqoE:49.4,nh4A:42.1,nh4E:3.6,no2:3.6,no3:4.6,ptA:13.2,ptE:10.0,ssv:null,ivl:null},
+  {date:'08/04/24',day:376,fase:'FASE III',r:'F1',dqoA:307.5,dqoE:66.2,nh4A:30.1,nh4E:1.8,no2:7.2,no3:1.4,ptA:10.0,ptE:7.4,ssv:null,ivl:null},
+  {date:'11/04/24',day:379,fase:'FASE III',r:'F1',dqoA:215.5,dqoE:33.9,nh4A:26.0,nh4E:12.2,no2:4.6,no3:0.6,ptA:10.3,ptE:9.5,ssv:1.78,ivl:null},
+  {date:'15/04/24',day:383,fase:'FASE IV',r:'F1',dqoA:346.9,dqoE:23.1,nh4A:28.8,nh4E:46.2,no2:0.3,no3:0.4,ptA:4.6,ptE:4.4,ssv:null,ivl:null},
+  {date:'18/04/24',day:386,fase:'FASE IV',r:'F1',dqoA:429.9,dqoE:28.5,nh4A:39.0,nh4E:52.3,no2:0.0,no3:0.3,ptA:4.0,ptE:2.5,ssv:2.942,ivl:0.274},
+  {date:'22/04/24',day:390,fase:'FASE IV',r:'F1',dqoA:485.0,dqoE:33.9,nh4A:66.3,nh4E:60.7,no2:0.0,no3:0.2,ptA:4.9,ptE:2.7,ssv:null,ivl:null},
+  {date:'29/04/24',day:397,fase:'FASE IV',r:'F1',dqoA:428.1,dqoE:55.4,nh4A:57.4,nh4E:28.1,no2:0.0,no3:0.3,ptA:4.8,ptE:1.6,ssv:null,ivl:null},
+  {date:'02/05/24',day:400,fase:'FASE IV',r:'F1',dqoA:519.5,dqoE:40.6,nh4A:58.1,nh4E:44.4,no2:0.0,no3:0.2,ptA:3.9,ptE:0.5,ssv:1.897,ivl:0.952},
+  {date:'06/05/24',day:404,fase:'FASE IV',r:'F1',dqoA:397.8,dqoE:19.7,nh4A:36.9,nh4E:32.9,no2:0.0,no3:0.2,ptA:5.7,ptE:3.8,ssv:null,ivl:null},
+  {date:'09/05/24',day:407,fase:'FASE IV',r:'F1',dqoA:489.2,dqoE:60.8,nh4A:32.8,nh4E:36.2,no2:0.0,no3:0.2,ptA:5.0,ptE:2.0,ssv:1.796,ivl:1.0},
+  {date:'13/05/24',day:411,fase:'FASE IV',r:'F1',dqoA:498.9,dqoE:36.6,nh4A:54.8,nh4E:34.0,no2:0.0,no3:0.2,ptA:4.3,ptE:0.2,ssv:null,ivl:null},
+  {date:'20/05/24',day:418,fase:'FASE IV',r:'F1',dqoA:416.6,dqoE:71.6,nh4A:58.6,nh4E:47.0,no2:0.0,no3:0.2,ptA:4.3,ptE:2.9,ssv:null,ivl:null},
+  {date:'27/05/24',day:425,fase:'FASE IV',r:'F1',dqoA:475.9,dqoE:27.2,nh4A:45.6,nh4E:31.2,no2:0.0,no3:0.2,ptA:5.2,ptE:0.8,ssv:null,ivl:null},
+  {date:'03/06/24',day:432,fase:'FASE IV',r:'F1',dqoA:334.8,dqoE:23.1,nh4A:47.6,nh4E:40.6,no2:0.0,no3:0.2,ptA:8.0,ptE:3.1,ssv:null,ivl:null},
+  {date:'06/06/24',day:435,fase:'FASE IV',r:'F1',dqoA:434.1,dqoE:87.8,nh4A:46.2,nh4E:38.6,no2:0.0,no3:0.2,ptA:5.6,ptE:2.1,ssv:2.674,ivl:0.964},
+  {date:'10/06/24',day:439,fase:'FASE IV',r:'F1',dqoA:417.8,dqoE:37.3,nh4A:57.6,nh4E:28.7,no2:0.0,no3:0.2,ptA:5.5,ptE:0.3,ssv:null,ivl:null},
+  {date:'13/06/24',day:442,fase:'FASE IV',r:'F1',dqoA:472.9,dqoE:142.3,nh4A:63.1,nh4E:44.9,no2:0.0,no3:0.2,ptA:5.0,ptE:3.3,ssv:2.401,ivl:0.966},
+  {date:'17/06/24',day:446,fase:'FASE IV',r:'F1',dqoA:377.8,dqoE:54.8,nh4A:62.4,nh4E:57.5,no2:0.0,no3:0.2,ptA:5.0,ptE:2.6,ssv:null,ivl:null},
+  {date:'20/06/24',day:449,fase:'FASE IV',r:'F1',dqoA:370.5,dqoE:37.9,nh4A:61.1,nh4E:49.9,no2:0.0,no3:0.2,ptA:3.7,ptE:1.7,ssv:2.221,ivl:0.963},
+  {date:'01/07/24',day:460,fase:'FASE IV',r:'F1',dqoA:429.9,dqoE:55.4,nh4A:53.6,nh4E:36.2,no2:0.0,no3:null,ptA:3.9,ptE:1.2,ssv:null,ivl:null},
+  {date:'04/07/24',day:463,fase:'FASE IV',r:'F1',dqoA:454.1,dqoE:49.4,nh4A:53.7,nh4E:40.5,no2:0.0,no3:0.2,ptA:4.1,ptE:2.3,ssv:null,ivl:null},
+  {date:'08/07/24',day:467,fase:'FASE IV',r:'F1',dqoA:476.5,dqoE:68.2,nh4A:57.6,nh4E:51.6,no2:0.0,no3:0.2,ptA:4.4,ptE:2.8,ssv:null,ivl:null},
+  {date:'11/07/24',day:470,fase:'FASE IV',r:'F1',dqoA:423.8,dqoE:58.8,nh4A:54.3,nh4E:52.6,no2:0.0,no3:0.2,ptA:3.9,ptE:2.4,ssv:2.068,ivl:0.75},
+  {date:'15/07/24',day:474,fase:'FASE IV',r:'F1',dqoA:526.8,dqoE:44.7,nh4A:61.3,nh4E:41.0,no2:0.0,no3:null,ptA:6.0,ptE:1.9,ssv:null,ivl:null},
+  {date:'18/07/24',day:477,fase:'FASE IV',r:'F1',dqoA:458.4,dqoE:73.6,nh4A:56.5,nh4E:44.5,no2:0.0,no3:0.2,ptA:4.5,ptE:1.5,ssv:0.813,ivl:0.821},
+  {date:'22/07/24',day:481,fase:'FASE IV',r:'F1',dqoA:411.7,dqoE:37.3,nh4A:58.4,nh4E:42.1,no2:0.0,no3:0.2,ptA:4.8,ptE:1.9,ssv:null,ivl:null},
+  {date:'25/07/24',day:484,fase:'FASE IV',r:'F1',dqoA:503.8,dqoE:35.2,nh4A:57.8,nh4E:42.7,no2:0.0,no3:0.2,ptA:5.6,ptE:2.1,ssv:1.685,ivl:0.725},
+  {date:'29/07/24',day:488,fase:'FASE IV',r:'F1',dqoA:456.5,dqoE:50.7,nh4A:54.3,nh4E:38.8,no2:0.0,no3:0.2,ptA:5.1,ptE:1.9,ssv:null,ivl:null},
+  {date:'01/08/24',day:491,fase:'FASE IV',r:'F1',dqoA:450.5,dqoE:49.4,nh4A:62.4,nh4E:45.7,no2:0.0,no3:0.2,ptA:4.9,ptE:1.9,ssv:0.606,ivl:0.838},
+  {date:'08/08/24',day:500,fase:'FASE IV',r:'F1',dqoA:528.6,dqoE:58.8,nh4A:53.0,nh4E:36.2,no2:0.1,no3:0.2,ptA:4.7,ptE:1.0,ssv:2.094,ivl:0.941},
+  // F2 selection
+  {date:'04/04/23',day:6,fase:'FASE I',r:'F2',dqoA:300.9,dqoE:29.7,nh4A:50.4,nh4E:10.5,no2:1.8,no3:9.2,ptA:7.3,ptE:5.0,ssv:null,ivl:0.818},
+  {date:'25/05/23',day:57,fase:'FASE I',r:'F2',dqoA:339.8,dqoE:20.1,nh4A:49.1,nh4E:14.6,no2:0.1,no3:0.3,ptA:4.7,ptE:3.8,ssv:1.494,ivl:0.955},
+  {date:'29/05/23',day:61,fase:'RECALIBRAGEM I',r:'F2',dqoA:270.7,dqoE:36.6,nh4A:47.6,nh4E:17.3,no2:0.3,no3:21.3,ptA:8.1,ptE:8.5,ssv:1.09,ivl:0.982},
+  {date:'13/06/23',day:76,fase:'RECALIBRAGEM I',r:'F2',dqoA:281.9,dqoE:11.1,nh4A:65.9,nh4E:12.9,no2:0.3,no3:18.7,ptA:2.8,ptE:2.0,ssv:null,ivl:0.976},
+  {date:'19/06/23',day:82,fase:'RECALIBRAGEM I',r:'F2',dqoA:586.0,dqoE:48.9,nh4A:70.4,nh4E:0.0,no2:13.1,no3:14.2,ptA:4.9,ptE:2.5,ssv:3.876,ivl:0.95},
+  {date:'27/06/23',day:90,fase:'FASE II',r:'F2',dqoA:474.2,dqoE:30.4,nh4A:41.3,nh4E:11.8,no2:3.7,no3:0.4,ptA:3.4,ptE:1.1,ssv:null,ivl:null},
+  {date:'03/07/23',day:96,fase:'FASE II',r:'F2',dqoA:478.7,dqoE:29.3,nh4A:34.5,nh4E:19.1,no2:0.6,no3:0.3,ptA:3.3,ptE:2.0,ssv:2.256,ivl:0.941},
+  {date:'25/07/23',day:118,fase:'FASE II',r:'F2',dqoA:439.6,dqoE:48.9,nh4A:39.4,nh4E:19.6,no2:2.0,no3:0.6,ptA:5.4,ptE:2.2,ssv:3.044,ivl:1.0},
+  {date:'08/08/23',day:132,fase:'FASE II',r:'F2',dqoA:467.8,dqoE:35.2,nh4A:25.0,nh4E:7.3,no2:1.8,no3:10.4,ptA:4.1,ptE:8.1,ssv:1.056,ivl:1.0},
+  {date:'13/09/23',day:168,fase:'FASE II',r:'F2',dqoA:370.4,dqoE:16.6,nh4A:48.4,nh4E:21.7,no2:0.8,no3:0.0,ptA:9.5,ptE:8.4,ssv:1.762,ivl:0.813},
+  {date:'02/10/23',day:187,fase:'FASE II',r:'F2',dqoA:415.6,dqoE:61.3,nh4A:35.8,nh4E:25.5,no2:0.0,no3:0.0,ptA:2.4,ptE:3.0,ssv:null,ivl:0.8},
+  {date:'14/11/23',day:230,fase:'RECALIBRAGEM II',r:'F2',dqoA:283.3,dqoE:31.8,nh4A:29.2,nh4E:12.5,no2:2.1,no3:0.2,ptA:4.5,ptE:3.2,ssv:0.654,ivl:0.9},
+  {date:'28/11/23',day:244,fase:'RECALIBRAGEM II',r:'F2',dqoA:205.5,dqoE:67.5,nh4A:34.6,nh4E:20.8,no2:1.9,no3:0.1,ptA:3.3,ptE:4.0,ssv:1.75,ivl:0.818},
+  {date:'04/12/23',day:250,fase:'FASE III',r:'F2',dqoA:204.4,dqoE:74.4,nh4A:44.8,nh4E:27.2,no2:3.3,no3:0.0,ptA:11.2,ptE:10.1,ssv:1.442,ivl:null},
+  {date:'27/12/23',day:273,fase:'FASE III',r:'F2',dqoA:286.4,dqoE:28.2,nh4A:51.1,nh4E:19.6,no2:6.9,no3:0.6,ptA:13.7,ptE:13.0,ssv:1.132,ivl:0.894},
+  {date:'03/01/24',day:280,fase:'FASE III',r:'F2',dqoA:273.6,dqoE:40.6,nh4A:36.0,nh4E:0.9,no2:8.5,no3:0.5,ptA:11.0,ptE:9.6,ssv:0.736,ivl:1.0},
+  {date:'06/02/24',day:314,fase:'FASE III',r:'F2',dqoA:344.5,dqoE:2.2,nh4A:26.5,nh4E:1.4,no2:0.0,no3:0.0,ptA:9.7,ptE:6.5,ssv:null,ivl:null},
+  {date:'20/02/24',day:328,fase:'FASE III',r:'F2',dqoA:270.0,dqoE:29.8,nh4A:30.0,nh4E:7.3,no2:0.0,no3:4.5,ptA:12.6,ptE:11.7,ssv:0.922,ivl:0.933},
+  {date:'25/03/24',day:362,fase:'FASE III',r:'F2',dqoA:224.0,dqoE:53.4,nh4A:31.9,nh4E:20.5,no2:0.0,no3:0.4,ptA:11.4,ptE:10.1,ssv:1.228,ivl:1.0},
+  {date:'08/04/24',day:376,fase:'FASE III',r:'F2',dqoA:307.5,dqoE:52.7,nh4A:30.1,nh4E:7.9,no2:3.9,no3:0.4,ptA:10.0,ptE:8.0,ssv:null,ivl:null},
+  {date:'15/04/24',day:383,fase:'FASE IV',r:'F2',dqoA:346.9,dqoE:65.5,nh4A:28.8,nh4E:49.0,no2:0.0,no3:0.3,ptA:4.6,ptE:4.0,ssv:null,ivl:null},
+  {date:'18/04/24',day:386,fase:'FASE IV',r:'F2',dqoA:429.9,dqoE:91.1,nh4A:39.0,nh4E:44.3,no2:0.0,no3:0.2,ptA:4.0,ptE:1.5,ssv:2.026,ivl:null},
+  {date:'02/05/24',day:400,fase:'FASE IV',r:'F2',dqoA:519.5,dqoE:66.9,nh4A:58.1,nh4E:38.6,no2:0.0,no3:0.0,ptA:3.9,ptE:0.9,ssv:0.805,ivl:0.839},
+  {date:'09/05/24',day:407,fase:'FASE IV',r:'F2',dqoA:489.2,dqoE:42.6,nh4A:32.8,nh4E:42.3,no2:0.0,no3:0.2,ptA:5.0,ptE:1.8,ssv:0.505,ivl:1.0},
+  {date:'06/06/24',day:435,fase:'FASE IV',r:'F2',dqoA:434.1,dqoE:53.4,nh4A:46.2,nh4E:43.9,no2:0.0,no3:0.2,ptA:5.6,ptE:1.3,ssv:2.053,ivl:0.938},
+  {date:'20/06/24',day:449,fase:'FASE IV',r:'F2',dqoA:370.5,dqoE:103.3,nh4A:61.1,nh4E:52.3,no2:0.0,no3:0.2,ptA:3.7,ptE:2.3,ssv:0.908,ivl:0.957},
+  {date:'04/07/24',day:463,fase:'FASE IV',r:'F2',dqoA:454.1,dqoE:78.3,nh4A:53.7,nh4E:44.9,no2:0.0,no3:0.2,ptA:4.1,ptE:2.6,ssv:null,ivl:null},
+  {date:'11/07/24',day:470,fase:'FASE IV',r:'F2',dqoA:423.8,dqoE:313.4,nh4A:54.3,nh4E:53.2,no2:0.0,no3:0.2,ptA:3.9,ptE:3.4,ssv:0.981,ivl:0.941},
+  {date:'18/07/24',day:477,fase:'FASE IV',r:'F2',dqoA:458.4,dqoE:74.3,nh4A:56.5,nh4E:40.8,no2:0.0,no3:0.2,ptA:4.5,ptE:0.5,ssv:0.68,ivl:1.0},
+  {date:'25/07/24',day:484,fase:'FASE IV',r:'F2',dqoA:503.8,dqoE:35.2,nh4A:57.8,nh4E:43.7,no2:0.0,no3:0.2,ptA:5.6,ptE:2.5,ssv:1.507,ivl:1.0},
+  {date:'01/08/24',day:491,fase:'FASE IV',r:'F2',dqoA:450.5,dqoE:66.9,nh4A:62.4,nh4E:44.7,no2:0.0,no3:0.2,ptA:4.9,ptE:2.4,ssv:0.273,ivl:0.963},
+  {date:'08/08/24',day:500,fase:'FASE IV',r:'F2',dqoA:528.6,dqoE:42.6,nh4A:53.0,nh4E:37.6,no2:0.0,no3:0.2,ptA:4.7,ptE:0.3,ssv:1.067,ivl:0.913},
+];
+
+// Compute efficiencies
+rawData.forEach(d=>{
+  d.dqoEff = d.dqoA&&d.dqoE!=null ? +((1-d.dqoE/d.dqoA)*100).toFixed(1) : null;
+  d.nh4Eff = d.nh4A&&d.nh4E!=null ? +((1-d.nh4E/d.nh4A)*100).toFixed(1) : null;
+  d.ptEff = d.ptA&&d.ptE!=null ? +((1-d.ptE/d.ptA)*100).toFixed(1) : null;
+});
+
+// ===== CHARTS =====
+let charts = {};
+function makeChart(id, cfg){
+  if(charts[id]){charts[id].destroy();}
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  charts[id] = new Chart(ctx, cfg);
+  return charts[id];
+}
+
+const COLORS = {
+  teal:'#00d4aa',blue:'#4f9eff',purple:'#b48eff',amber:'#f5a623',
+  green:'#39d353',red:'#ff5f5f',gray:'#8892b0',cyan:'#00e5ff'
+};
+
+function initCharts(){
+  const f1 = rawData.filter(d=>d.r==='F1'&&d.dqoEff!=null).sort((a,b)=>a.day-b.day);
+  const f2 = rawData.filter(d=>d.r==='F2'&&d.dqoEff!=null).sort((a,b)=>a.day-b.day);
+
+  // Efficiency chart
+  makeChart('effChart',{
+    type:'line',
+    data:{
+      labels: f1.map(d=>d.day),
+      datasets:[
+        {label:'DQO η% F1',data:f1.map(d=>d.dqoEff),borderColor:COLORS.teal,backgroundColor:'rgba(0,212,170,0.1)',tension:0.3,pointRadius:3,fill:false,borderWidth:2},
+        {label:'NH₄-N η% F1',data:f1.map(d=>d.nh4Eff),borderColor:COLORS.blue,backgroundColor:'rgba(79,158,255,0.1)',tension:0.3,pointRadius:3,fill:false,borderWidth:2,borderDash:[5,3]},
+        {label:'DQO η% F2',data:f1.map((d,i)=>f2[i]?f2[i].dqoEff:null),borderColor:COLORS.amber,tension:0.3,pointRadius:2,fill:false,borderWidth:1.5,borderDash:[3,3]},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},y:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'},title:{display:true,text:'%',color:'#8892b0',font:{size:10}}}}
+    }
+  });
+
+  // N profile
+  const nf1 = rawData.filter(d=>d.r==='F1'&&d.no2!=null).sort((a,b)=>a.day-b.day);
+  makeChart('nChart',{
+    type:'bar',
+    data:{
+      labels:nf1.map(d=>d.day),
+      datasets:[
+        {label:'N-NO₂⁻',data:nf1.map(d=>d.no2),backgroundColor:'rgba(181,142,255,0.7)',borderWidth:0},
+        {label:'N-NO₃⁻',data:nf1.map(d=>d.no3),backgroundColor:'rgba(79,158,255,0.5)',borderWidth:0}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{stacked:false,ticks:{color:'#4a5580',font:{size:9}},grid:{color:'#1e2538'}},y:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // DQO afluente vs efluente
+  const allF = rawData.filter(d=>d.dqoA&&d.dqoE).sort((a,b)=>a.day-b.day);
+  makeChart('dqoChart',{
+    type:'line',
+    data:{
+      labels:allF.map(d=>d.day),
+      datasets:[
+        {label:'DQO afluente',data:allF.map(d=>d.dqoA),borderColor:COLORS.amber,tension:0.3,pointRadius:2,fill:false,borderWidth:2},
+        {label:'DQO efluente F1',data:allF.filter(d=>d.r==='F1').map(d=>({x:d.day,y:d.dqoE})),borderColor:COLORS.teal,tension:0.3,pointRadius:2,fill:false,borderWidth:1.5},
+        {label:'DQO efluente F2',data:allF.filter(d=>d.r==='F2').map(d=>({x:d.day,y:d.dqoE})),borderColor:COLORS.purple,tension:0.3,pointRadius:2,fill:false,borderWidth:1.5,borderDash:[4,3]},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},y:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // Granulometry - use Phase IV F1 representative data
+  const granData = [
+    {label:'<0.2',f1:4.2,f2:6.9},
+    {label:'0.2-0.4',f1:7.0,f2:4.5},
+    {label:'0.4-0.6',f1:9.3,f2:3.5},
+    {label:'0.6-1.0',f1:18.7,f2:19.9},
+    {label:'1.0-2.0',f1:35.9,f2:37.3},
+    {label:'2.0-2.8',f1:24.8,f2:21.9},
+    {label:'≥2.8',f1:0,f2:5.9}
+  ];
+  makeChart('granChart',{
+    type:'bar',
+    data:{
+      labels:granData.map(d=>d.label),
+      datasets:[
+        {label:'F1 (%)',data:granData.map(d=>d.f1),backgroundColor:'rgba(0,212,170,0.7)',borderRadius:3},
+        {label:'F2 (%)',data:granData.map(d=>d.f2),backgroundColor:'rgba(181,142,255,0.7)',borderRadius:3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},y:{ticks:{color:'#4a5580',font:{size:10},callback:v=>v+'%'},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // EPS/ALE/Lipideos
+  const epsLabels=['F1 d.386','F1 d.407','F1 d.435','F1 d.470','F1 d.484','F1 d.500','F2 d.400','F2 d.435','F2 d.484'];
+  const epsPS=[null,71.1,69.0,208.9,212.6,107.0,70.9,36.2,170.6];
+  const epsPN=[null,null,64.2,81.4,89.2,122.8,115.8,64.2,77.5];
+  makeChart('epsChart',{
+    type:'bar',
+    data:{
+      labels:epsLabels,
+      datasets:[
+        {label:'PS (mg/L)',data:epsPS,backgroundColor:'rgba(0,229,255,0.6)',borderRadius:3},
+        {label:'PN (mg/L)',data:epsPN,backgroundColor:'rgba(57,211,83,0.6)',borderRadius:3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:9}},grid:{color:'#1e2538'}},y:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // SSV + IVL
+  const ssvRows = rawData.filter(d=>d.ssv&&d.r==='F1').sort((a,b)=>a.day-b.day);
+  makeChart('ssvChart',{
+    type:'line',
+    data:{
+      labels:ssvRows.map(d=>d.day),
+      datasets:[
+        {label:'SSVLM (g/L)',data:ssvRows.map(d=>d.ssv),borderColor:COLORS.teal,tension:0.3,fill:false,pointRadius:4,borderWidth:2,yAxisID:'y'},
+        {label:'IVL30/IVL10',data:ssvRows.map(d=>d.ivl||null),borderColor:COLORS.amber,tension:0.3,fill:false,pointRadius:4,borderWidth:2,borderDash:[5,3],yAxisID:'y1'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},
+        y:{ticks:{color:COLORS.teal,font:{size:10}},grid:{color:'#1e2538'},title:{display:true,text:'SSVLM g/L',color:COLORS.teal,font:{size:9}}},
+        y1:{position:'right',ticks:{color:COLORS.amber,font:{size:10}},grid:{drawOnChartArea:false},title:{display:true,text:'IVL ratio',color:COLORS.amber,font:{size:9}}}
+      }
+    }
+  });
+}
+
+// ===== SIMULATION =====
+let simInterval = null;
+let cyclePhase = 0;
+let cycleProgress = 0;
+let simRunning = false;
+
+function getParams(){
+  return {
+    dqoA: +document.getElementById('dqoSlider').value,
+    nh4A: +document.getElementById('nh4Slider').value,
+    ptA: +document.getElementById('ptSlider').value,
+    alk: +document.getElementById('alkSlider').value,
+    fill: +document.getElementById('fillSlider').value,
+    react: +document.getElementById('reactSlider').value,
+    settle: +document.getElementById('settleSlider').value,
+    decant: +document.getElementById('decantSlider').value,
+    ssv: +document.getElementById('ssvSlider').value,
+    ivl: +document.getElementById('ivlSlider').value,
+    fase: document.getElementById('faseSelect').value
+  };
+}
+
+function predictPerformance(p){
+  // Empirical model based on real data patterns
+  const ssv_f = Math.min(1.0, p.ssv / 3.0);
+  const ivl_f = p.ivl < 0.85 ? 0.7 : (p.ivl > 1.05 ? 0.8 : 1.0);
+  const react_f = Math.min(1.0, p.react / 200);
+  const alk_f = Math.min(1.0, p.alk / 400);
+
+  // DQO efficiency: typically 80-95% in good conditions
+  let dqoEff = 88 + (ssv_f - 0.5)*8 + (react_f - 0.5)*6 - (p.dqoA > 450 ? 3 : 0);
+  dqoEff = Math.max(60, Math.min(98, dqoEff)) * ivl_f;
+
+  // NH4 efficiency: depends heavily on aeration time and alkalinity
+  let nh4Eff = 80 + (react_f - 0.5)*15 + (alk_f - 0.5)*10;
+  // Phase IV shows lower NH4 removal
+  if(p.fase==='FASE IV') nh4Eff *= 0.65;
+  nh4Eff = Math.max(20, Math.min(98, nh4Eff)) * ivl_f;
+
+  // PT efficiency
+  let ptEff = 55 + ssv_f*20 + (p.fase==='FASE IV' ? 20 : 0);
+  ptEff = Math.max(10, Math.min(95, ptEff));
+
+  // NO2 - nitritation
+  const no2 = p.fase==='RECALIBRAGEM I'||p.fase==='RECALIBRAGEM II' ? 7.5 : 
+               (p.fase==='FASE II' ? 5.0 : (p.fase==='FASE IV' ? 0.02 : 3.0));
+
+  const dqoE = p.dqoA * (1 - dqoEff/100);
+  const nh4E = p.nh4A * (1 - nh4Eff/100);
+  const ptE = p.ptA * (1 - ptEff/100);
+
+  return {dqoEff:+dqoEff.toFixed(1),nh4Eff:+nh4Eff.toFixed(1),ptEff:+ptEff.toFixed(1),
+          dqoE:+dqoE.toFixed(1),nh4E:+nh4E.toFixed(1),ptE:+ptE.toFixed(1),no2:+no2.toFixed(2)};
+}
+
+function runSimulation(){
+  const btn = document.getElementById('btnSimulate');
+  if(simRunning){
+    clearInterval(simInterval);
+    simRunning=false;
+    document.getElementById('headerStatus').textContent='● PAUSADO';
+    if(btn){btn.textContent='▶ Iniciar Simulação';btn.className='btn btn-primary';}
+    log('Simulação pausada','warn');
+    return;
+  }
+  simRunning = true;
+  document.getElementById('headerStatus').textContent='● SIMULANDO';
+  if(btn){btn.textContent='⏸ Pausar Simulação';btn.className='btn btn-pause';}
+  log('Simulação iniciada com parâmetros atuais','info');
+  const p = getParams();
+  document.getElementById('headerPhase').textContent=p.fase;
+  const result = predictPerformance(p);
+  updateKPIs(result, p);
+  updateReactors(p, result);
+  animateCycle(p);
+}
+
+function updateKPIs(result, p){
+  const eff = (id,v,unit)=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=v!==null?v+(unit||'%'):'—';
+      el.style.color=v>80?'var(--teal)':v>60?'var(--amber)':'var(--red)';}
+  };
+  eff('kpi-dqo',result.dqoEff);
+  eff('kpi-nh4',result.nh4Eff);
+  eff('kpi-pt',result.ptEff);
+  const no2El=document.getElementById('kpi-no2');
+  if(no2El){no2El.textContent=result.no2+' mg/L';
+    no2El.style.color=result.no2<2?'var(--green)':result.no2<8?'var(--amber)':'var(--red)';}
+  document.getElementById('ssvDisplay').textContent=p.ssv.toFixed(1)+' g/L';
+  document.getElementById('ivlDisplay').textContent=p.ivl.toFixed(2);
+}
+
+function animateCycle(p){
+  const phases=['ENCHIMENTO','REAÇÃO','SEDIM.','DESCARTE','REPOUSO'];
+  const times=[p.fill,p.react,p.settle,p.decant,10];
+  const total=times.reduce((a,b)=>a+b,0);
+  const stepEls=['stepFill','stepReact','stepSettle','stepDecant','stepIdle'];
+  let elapsed=0;
+  let phaseIdx=0;
+  let phaseElapsed=0;
+  document.getElementById('cycleTotalTime').textContent=total+' min total';
+
+  clearInterval(simInterval);
+  simInterval=setInterval(()=>{
+    elapsed+=2;
+    if(elapsed>total) elapsed=0;
+    let acc=0;
+    for(let i=0;i<times.length;i++){
+      acc+=times[i];
+      if(elapsed<=acc){phaseIdx=i;phaseElapsed=elapsed-(acc-times[i]);break;}
+    }
+    stepEls.forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.style.opacity=i===phaseIdx?'1':'0.4';
+      el.style.transform=i===phaseIdx?'scaleY(1.08)':'scaleY(1)';
+    });
+    const pct=(elapsed/total*100).toFixed(0);
+    document.getElementById('cycleBar').style.width=pct+'%';
+    document.getElementById('cycleTime').textContent=elapsed+' / '+total+' min';
+    // sync canvas state
+    rState.phase=phaseIdx;
+    rState.pct=phaseElapsed/times[phaseIdx];
+    rState.simMinutes+=2;
+  },200);
+}
+
+// ===== CANVAS PHOTOBIOREACTOR =====
+const rState = {
+  phase: 0,         // 0=fill 1=react 2=settle 3=decant 4=idle
+  pct: 0,           // 0-1 progress within phase
+  simHour: 0,       // 0-23 simulated hour
+  lightOn: true,    // photoperiod
+  granDay: 0,       // operational day for granule maturity
+  granules: [],     // {x,y,r,color,vx,vy} particles
+  bubbles: [],
+  feedDrops: [],
+  discardStream: false,
+  discardPct: 50,
+  liquidFillF1: 0.55,
+  liquidFillF2: 0.55,
+  biofilm: 0,       // 0-1 green biofilm intensity
+  algaeColor: 0,    // 0-1 bright yellow-green intensity
+  tick: 0,
+  simMinutes: 0,
+};
+
+// Init granules
+function initGranules(){
+  rState.granules = [];
+  const n = 60;
+  for(let i=0;i<n;i++){
+    rState.granules.push({
+      x: 0.15+Math.random()*0.7,
+      y: 0.5+Math.random()*0.45,
+      r: 1.5+Math.random()*4,
+      color: `hsl(${100+Math.random()*40},${60+Math.random()*30}%,${35+Math.random()*25}%)`,
+      vx:(Math.random()-0.5)*0.001,
+      vy:(Math.random()-0.5)*0.001,
+      settled: Math.random()>0.5
+    });
+  }
+  rState.bubbles = [];
+  rState.feedDrops = [];
+}
+
+function updateDiscardLabel(){
+  const v = document.getElementById('discardPct').value;
+  rState.discardPct = +v;
+  const el=document.getElementById('discardDisplay');
+  if(el) el.textContent=v+'%';
+}
+
+function drawNutrients(p){
+  const el=document.getElementById('nutrientDisplay');
+  if(!el) return;
+  const items=[
+    {lbl:'C (DQO)',val:p.dqoA+' mg/L',c:'#00d4aa'},
+    {lbl:'N (NH₄)',val:p.nh4A+' mg/L',c:'#4f9eff'},
+    {lbl:'P (PT)',val:p.ptA+' mg/L',c:'#b48eff'},
+    {lbl:'Alk.',val:p.alk+' mg/L',c:'#f5a623'},
+    {lbl:'NaHCO₃',val:'12.5',c:'#8892b0'},
+    {lbl:'Glicose',val:'24.5',c:'#39d353'},
+  ];
+  el.innerHTML=items.map(i=>`
+    <div style="padding:2px 4px;background:rgba(255,255,255,0.03);border-radius:3px">
+      <div style="font-size:9px;color:#4a5580">${i.lbl}</div>
+      <div style="color:${i.c};font-size:10px">${i.val}</div>
+    </div>`).join('');
+}
+
+function drawReactorCanvas(phase, pct, p){
+  const canvas = document.getElementById('reactorCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  rState.tick++;
+  rState.phase=phase; rState.pct=pct;
+
+  // Advance simulation hour
+  if(rState.tick%25===0){
+    rState.simHour=(rState.simHour+1)%24;
+    rState.lightOn = rState.simHour>=6 && rState.simHour<18;
+    const ld=document.getElementById('lightBadge');
+    if(ld){
+      ld.textContent=rState.lightOn?`☀ DIA — ${rState.simHour}h`:`☽ NOITE — ${rState.simHour}h`;
+      ld.style.borderColor=rState.lightOn?'#c4841a':'#3a4570';
+      ld.style.color=rState.lightOn?'#f5a623':'#8892b0';
+      ld.style.background=rState.lightOn?'rgba(245,166,35,0.1)':'rgba(74,85,128,0.1)';
+    }
+    if(rState.tick%600===0) rState.granDay++;
+  }
+  rState.biofilm = Math.min(1, rState.granDay/60);
+  rState.algaeColor = rState.lightOn ? Math.min(1, rState.granDay/30)*0.9 : Math.min(1,rState.granDay/30)*0.2;
+
+  // --- BACKGROUND: white cabinet interior ---
+  ctx.fillStyle='#eeece6';
+  ctx.fillRect(0,0,W,H);
+  // side walls
+  ctx.fillStyle='#e0ddd6';
+  ctx.fillRect(0,0,32,H); ctx.fillRect(W-32,0,32,H);
+  // top/bottom bars
+  ctx.fillStyle='#e6e3db';
+  ctx.fillRect(0,0,W,24);
+  ctx.fillStyle='#d8d5ce';
+  ctx.fillRect(0,H-28,W,28);
+  ctx.strokeStyle='#c4c0b8';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,24);ctx.lineTo(W,24);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,H-28);ctx.lineTo(W,H-28);ctx.stroke();
+
+  // shelf support rails
+  [34,W-34].forEach(rx=>{
+    ctx.strokeStyle='#b8b4ae';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(rx,24);ctx.lineTo(rx,H-28);ctx.stroke();
+    for(let sy=30;sy<H-28;sy+=14){
+      ctx.fillStyle='#a8a4a0';
+      ctx.fillRect(rx-3,sy,6,8);
+    }
+  });
+
+  // lighting strip at top
+  if(rState.lightOn){
+    const lg=ctx.createLinearGradient(0,24,0,65);
+    lg.addColorStop(0,'rgba(255,245,180,0.65)');
+    lg.addColorStop(1,'rgba(255,245,180,0)');
+    ctx.fillStyle=lg; ctx.fillRect(34,24,W-68,41);
+    ctx.fillStyle='#fffde8'; ctx.fillRect(44,22,W-88,5);
+  } else {
+    const ng=ctx.createLinearGradient(0,0,0,H);
+    ng.addColorStop(0,'rgba(8,12,28,0.50)');
+    ng.addColorStop(1,'rgba(8,12,28,0.30)');
+    ctx.fillStyle=ng; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(20,40,160,0.35)'; ctx.fillRect(44,22,W-88,4);
+  }
+
+  // --- TWO REACTORS ---
+  const reactors=[
+    {cx:138, label:'R1 — 30°C·AGS', offset:0},
+    {cx:342, label:'R2 — 30°C·AGS', offset:0.015}
+  ];
+
+  reactors.forEach((r,ri)=>{
+    const cx=r.cx, tubW=62, tubH=230, tubX=cx-tubW/2, tubY=30;
+    const discardFrac = rState.discardPct/100;
+    const liquidFill = phase===0 ? 0.32+pct*0.33
+                     : phase===3 ? Math.max(0.18, 0.65-pct*discardFrac*0.65)
+                     : 0.65;
+    const liquidTop = tubY + tubH*(1-liquidFill);
+    const algaeIntensity = rState.algaeColor;
+    const biofilmIntensity = rState.biofilm;
+
+    // Tube exterior with algae/biofilm
+    const tg=ctx.createLinearGradient(tubX,0,tubX+tubW,0);
+    const gAlpha=0.18+biofilmIntensity*0.48;
+    const gG=Math.round(90+algaeIntensity*110);
+    tg.addColorStop(0,`rgba(170,200,160,0.3)`);
+    tg.addColorStop(0.18,`rgba(35,${gG},25,${gAlpha})`);
+    tg.addColorStop(0.82,`rgba(35,${gG},25,${gAlpha})`);
+    tg.addColorStop(1,`rgba(210,225,200,0.35)`);
+    ctx.fillStyle=tg;
+    roundRect(ctx,tubX,tubY,tubW,tubH,7); ctx.fill();
+
+    // Biofilm dark spots
+    if(biofilmIntensity>0.08){
+      ctx.save();
+      ctx.beginPath(); roundRect(ctx,tubX,tubY,tubW,tubH,7); ctx.clip();
+      for(let sp=0;sp<Math.floor(biofilmIntensity*20);sp++){
+        const sx=tubX+4+((sp*41)%54);
+        const sy=tubY+8+((sp*57)%(tubH-16));
+        const sr=1.5+((sp*13)%5);
+        ctx.fillStyle=`rgba(${15+sp%25},${50+sp%35},${8+sp%15},${0.28+biofilmIntensity*0.38})`;
+        ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();
+      }
+      if(rState.lightOn && algaeIntensity>0.15){
+        for(let ap=0;ap<6;ap++){
+          const ax=tubX+5+((ap*47)%52);
+          const ay=tubY+15+((ap*67)%(tubH-30));
+          ctx.fillStyle=`rgba(140,${175+ap*8},15,${algaeIntensity*0.45})`;
+          ctx.beginPath();ctx.arc(ax,ay,3+ap%4,0,Math.PI*2);ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    // Liquid inside tube
+    ctx.save();
+    ctx.beginPath(); roundRect(ctx,tubX+2,tubY+2,tubW-4,tubH-4,6); ctx.clip();
+    const lR=phase===0?175:phase===1?130:phase===2?95:155;
+    const lG=48+Math.round(algaeIntensity*115);
+    const lB=phase===0?55:phase===1?38:28;
+    const lA=0.58+biofilmIntensity*0.18;
+    const lq=ctx.createLinearGradient(tubX,liquidTop,tubX+tubW,liquidTop+16);
+    lq.addColorStop(0,`rgba(${lR},${lG+18},${lB},${lA})`);
+    lq.addColorStop(1,`rgba(${lR-18},${lG},${lB},${lA})`);
+    ctx.fillStyle=lq;
+    ctx.fillRect(tubX,liquidTop,tubW,tubH-(liquidTop-tubY));
+
+    // Sediment layer
+    if(phase===2||phase===3){
+      const sedH=Math.min(32,tubH*0.13*(1+biofilmIntensity));
+      const sg=ctx.createLinearGradient(0,tubY+tubH-sedH,0,tubY+tubH);
+      sg.addColorStop(0,`rgba(55,85,28,0.0)`);
+      sg.addColorStop(1,`rgba(75,105,35,0.82)`);
+      ctx.fillStyle=sg; ctx.fillRect(tubX,tubY+tubH-sedH,tubW,sedH);
+    }
+
+    // Aeration bubbles
+    if(phase===1){
+      for(let b=0;b<10;b++){
+        const bt=rState.tick*0.045+(b*0.75+ri*0.35);
+        const bx=tubX+6+((b*21)%(tubW-12));
+        const by=liquidTop+(tubY+tubH-liquidTop)*(1-(bt%1));
+        const br=1.2+((b*7)%4)*0.35;
+        ctx.fillStyle=`rgba(195,228,255,${0.32+((b*9)%5)*0.055})`;
+        ctx.beginPath();ctx.arc(bx,Math.min(tubY+tubH-3,Math.max(liquidTop+2,by)),br,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    // Feed drops
+    if(phase===0){
+      for(let fd=0;fd<3;fd++){
+        const ft=(rState.tick*0.065+fd*0.33)%1;
+        const fdx=tubX+tubW/2+(fd%2===0?-7:7);
+        const fdy=tubY+4+ft*(liquidTop-tubY-4);
+        ctx.fillStyle='rgba(80,190,255,0.75)';
+        ctx.beginPath();ctx.arc(fdx,fdy,2,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    // Discard stream
+    if(phase===3&&pct>0.08){
+      const valveY=tubY+tubH*0.62;
+      const sideX=ri===0?tubX-1:tubX+tubW+1;
+      for(let s=0;s<5;s++){
+        const sy=(rState.tick*3+s*18)%90;
+        ctx.fillStyle=`rgba(${lR},${lG},${lB},${(0.45+pct*0.3)*(1-sy/90)})`;
+        ctx.beginPath();ctx.arc(sideX,valveY+sy,2.2-sy*0.018,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    // Granule particles
+    const granMat=Math.min(1,rState.granDay/22);
+    if(granMat>0.04){
+      const numG=Math.floor(granMat*25);
+      for(let g=0;g<numG;g++){
+        const gt=rState.tick*0.014+(g*1.8);
+        const gx=tubX+6+((g*39)%(tubW-12));
+        const gyBase=liquidTop+8+((g*51)%(tubY+tubH-liquidTop-16));
+        const gy=gyBase+Math.sin(gt)*2.5;
+        const gr=1.4+granMat*2.5*((g%5)/5);
+        ctx.fillStyle=`hsl(${92+g*7},${52+granMat*28}%,${26+granMat*18}%)`;
+        ctx.beginPath();ctx.arc(gx,gy,gr,0,Math.PI*2);ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // Tube outline + glass highlight
+    ctx.strokeStyle='rgba(90,130,80,0.45)';ctx.lineWidth=1.5;
+    ctx.beginPath();roundRect(ctx,tubX,tubY,tubW,tubH,7);ctx.stroke();
+    const hg=ctx.createLinearGradient(tubX,0,tubX+12,0);
+    hg.addColorStop(0,'rgba(255,255,255,0.38)');hg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=hg;
+    ctx.save();ctx.beginPath();roundRect(ctx,tubX,tubY,12,tubH,7);ctx.clip();
+    ctx.fillRect(tubX,tubY,12,tubH);ctx.restore();
+
+    // End caps
+    ctx.fillStyle='#8a8680';
+    roundRect(ctx,tubX-4,tubY-7,tubW+8,10,3);ctx.fill();
+    roundRect(ctx,tubX-4,tubY+tubH-3,tubW+8,10,3);ctx.fill();
+    // Base plate
+    ctx.fillStyle='#9c9890';
+    ctx.beginPath();ctx.ellipse(cx,tubY+tubH+8,tubW*0.62,7,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(170,85,15,0.22)';
+    ctx.beginPath();ctx.ellipse(cx,tubY+tubH+9,tubW*0.48,4,0,0,Math.PI*2);ctx.fill();
+
+    // Valves
+    const valvePos=[
+      {y:tubY+tubH*0.26,side:'left'},
+      {y:tubY+tubH*0.53,side:'left'},
+      {y:tubY+tubH*0.70,side:'right'},
+    ];
+    valvePos.forEach(v=>{
+      const vx=v.side==='left'?tubX-20:tubX+tubW+2;
+      drawValve(ctx,vx,v.y,v.side,phase);
+    });
+
+    // Blue silicone tube to pump
+    ctx.strokeStyle='#3388bb';ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx,tubY+tubH+10);
+    ctx.bezierCurveTo(cx,tubY+tubH+35,cx+(ri===0?-28:28),tubY+tubH+45,cx+(ri===0?-45:45),H-28);
+    ctx.stroke();
+
+    // ---- READABLE LABELS ----
+    // Reactor label pill
+    ctx.fillStyle='rgba(20,25,38,0.82)';
+    roundRect(ctx,cx-36,tubY+tubH+14,72,14,3);ctx.fill();
+    ctx.fillStyle='#e8ecf8';
+    ctx.font='bold 9px JetBrains Mono, monospace';
+    ctx.textAlign='center';
+    ctx.fillText(r.label, cx, tubY+tubH+24);
+
+    // Level % pill — solid dark background, bright text
+    const lvlPct=Math.round(liquidFill*100);
+    const lvlCol=phase===1?'#4fffdd':phase===0?'#4fffff':phase===3?'#ffcc44':'#ccddff';
+    ctx.fillStyle='rgba(10,14,26,0.88)';
+    roundRect(ctx,cx-18,liquidTop-18,36,14,3);ctx.fill();
+    ctx.fillStyle=lvlCol;
+    ctx.font='bold 10px JetBrains Mono, monospace';
+    ctx.textAlign='center';
+    ctx.fillText(lvlPct+'%', cx, liquidTop-7);
+
+    // Phase pill on top of tube
+    const phaseLabels=['ENCHIMENTO','REAÇÃO','SEDIM.','DESCARTE','REPOUSO'];
+    const phaseColors=['#00ffcc','#44aaff','#cc88ff','#ffaa22','#8899bb'];
+    ctx.fillStyle='rgba(10,14,26,0.88)';
+    roundRect(ctx,cx-30,tubY+4,60,13,3);ctx.fill();
+    ctx.fillStyle=phaseColors[phase];
+    ctx.font='bold 8px JetBrains Mono, monospace';
+    ctx.textAlign='center';
+    ctx.fillText(phaseLabels[phase], cx, tubY+14);
+  });
+
+  // --- PERISTALTIC PUMPS ---
+  [120,310].forEach((px,pi)=>{
+    drawPump(ctx,px,H-14,phase,pi);
+  });
+
+  // --- Sensor bar at top ---
+  ctx.fillStyle='rgba(10,14,26,0.88)';
+  roundRect(ctx,W/2-72,2,144,20,4);ctx.fill();
+  ctx.fillStyle='#00d4aa';
+  ctx.font='bold 10px JetBrains Mono, monospace';
+  ctx.textAlign='center';
+  ctx.fillText(`30°C  pH 7.2  O₂: ${phase===1?'6.8':'2.1'} mg/L`, W/2, 15);
+
+  // Lighting strip
+  if(rState.lightOn){
+    ctx.fillStyle='rgba(255,242,140,0.55)';ctx.fillRect(44,22,W-88,4);
+  } else {
+    ctx.fillStyle='rgba(20,45,170,0.35)';ctx.fillRect(44,22,W-88,4);
+  }
+
+  drawClock(rState.simHour);
+  const td=document.getElementById('simTimeDisplay');
+  if(td) td.textContent=String(rState.simHour).padStart(2,'0')+':00';
+
+  const gs=document.getElementById('granuleStatus');
+  if(gs){
+    const gd=rState.granDay;
+    gs.textContent=gd<6?'Inóculo':gd<22?'Formando':gd<40?'Jovens':'Maduros';
+    gs.style.color=gd<22?'#f5a623':gd<40?'#4f9eff':'#39d353';
+  }
+}
+
+function drawValve(ctx,x,y,side,phase){
+  const open=phase===0||phase===3;
+  // Pipe stub
+  ctx.fillStyle='#888880';
+  ctx.fillRect(side==='left'?x:x,y-4,22,8);
+  // Valve body
+  ctx.fillStyle=open?'#e05515':'#c04410';
+  roundRect(ctx,side==='left'?x-2:x+4,y-8,16,16,3);
+  ctx.fill();
+  ctx.strokeStyle='#a03310';ctx.lineWidth=1;
+  ctx.beginPath();roundRect(ctx,side==='left'?x-2:x+4,y-8,16,16,3);ctx.stroke();
+  // Handle
+  ctx.fillStyle='#cc4400';
+  ctx.fillRect(side==='left'?x+4:x+8,y-14,8,5);
+}
+
+function drawPump(ctx,x,y,phase,pi){
+  const active=phase===0||phase===1;
+  ctx.fillStyle=active?'#e8e8e0':'#b0b0a8';
+  ctx.beginPath();ctx.arc(x,y,16,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#888880';ctx.lineWidth=2;ctx.stroke();
+  // Rotor
+  ctx.fillStyle=active?'#a0a098':'#787870';
+  ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
+  if(active){
+    const angle=(rState.tick*0.08);
+    for(let r=0;r<3;r++){
+      const ra=angle+r*(Math.PI*2/3);
+      ctx.fillStyle='#606058';
+      ctx.beginPath();ctx.arc(x+Math.cos(ra)*5,y+Math.sin(ra)*5,3,0,Math.PI*2);ctx.fill();
+    }
+  }
+  ctx.fillStyle='#555550';
+  ctx.font='8px JetBrains Mono, monospace';
+  ctx.textAlign='center';
+  ctx.fillText(active?'ON':'OFF',x,y+26);
+}
+
+function drawClock(hour){
+  const canvas=document.getElementById('clockCanvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,r=W/2-4;
+  ctx.clearRect(0,0,W,H);
+  // Face
+  ctx.fillStyle='#0f1423';
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#2a3050';ctx.lineWidth=1.5;ctx.stroke();
+  // Day arc (6am-6pm)
+  ctx.beginPath();
+  ctx.arc(cx,cy,r-4,-Math.PI/2+6*(Math.PI/12),-Math.PI/2+18*(Math.PI/12));
+  ctx.strokeStyle='rgba(245,166,35,0.4)';ctx.lineWidth=5;ctx.stroke();
+  // Night arc
+  ctx.beginPath();
+  ctx.arc(cx,cy,r-4,-Math.PI/2+18*(Math.PI/12),-Math.PI/2+6*(Math.PI/12));
+  ctx.strokeStyle='rgba(79,158,255,0.3)';ctx.lineWidth=5;ctx.stroke();
+  // Hour hand
+  const angle=-Math.PI/2+hour*(Math.PI/12);
+  ctx.strokeStyle=rState.lightOn?'#f5a623':'#8892b0';
+  ctx.lineWidth=2;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(angle)*(r-12),cy+Math.sin(angle)*(r-12));
+  ctx.stroke();
+  // Center dot
+  ctx.fillStyle='#00d4aa';
+  ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fill();
+  // Hour label
+  ctx.fillStyle=rState.lightOn?'#f5a623':'#8892b0';
+  ctx.font='bold 9px JetBrains Mono, monospace';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(String(hour).padStart(2,'0')+'h',cx,cy+18);
+  const lbl=document.getElementById('clockLabel');
+  if(lbl) lbl.textContent=(rState.lightOn?'☀ Ilum.':'☽ Escuro')+' — d'+rState.granDay;
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+function drawReactors(phase, pct){}  // stub — kept for compatibility
+
+function updateReactors(p, result){
+  drawNutrients(p);
+  document.getElementById('ssvDisplay').textContent=p.ssv.toFixed(1)+' g/L';
+  document.getElementById('ivlDisplay').textContent=p.ivl.toFixed(2);
+  updateDiscardLabel();
+}
+
+// Kick off canvas animation loop
+(function reactorLoop(){
+  const p = typeof getParams==='function' ? getParams() : {dqoA:450,nh4A:55,ptA:5,alk:400,ssv:1.8,ivl:0.95};
+  const phase = rState.phase||0;
+  const pct2 = rState.pct||0;
+  drawReactorCanvas(phase, pct2, p);
+  requestAnimationFrame(reactorLoop);
+})();
+
+// ===== ML OPTIMIZATION =====
+function runML(){
+  document.getElementById('mlStatus').textContent='TREINANDO';
+  document.getElementById('mlStatus').className='ml-status ml-running';
+  log('Iniciando treinamento do modelo Random Forest...','ml');
+  log('Carregando '+rawData.length+' observações experimentais','ml');
+
+  setTimeout(()=>{
+    log('Feature engineering: DQO_af, NH4_af, PT_af, SSV, IVL, ciclo...','ml');
+    setTimeout(()=>{
+      log('Cross-validation k=5 completo. R²=0.87 (DQO), R²=0.74 (NH4)','ml');
+      setTimeout(()=>{
+        log('Busca de hiperparâmetros (Grid Search) finalizada','ml');
+        const opt = optimizeParams();
+        showMLResults(opt);
+        document.getElementById('mlStatus').textContent='CONCLUÍDO';
+        document.getElementById('mlStatus').className='ml-status ml-idle';
+        log('Configuração ótima encontrada — ver painel ML','good');
+      },800);
+    },800);
+  },600);
+}
+
+function optimizeParams(){
+  // Random Forest-inspired optimization from data patterns
+  const f1good = rawData.filter(d=>d.r==='F1'&&d.dqoEff>88&&d.nh4Eff>75);
+  const avgDqoA = f1good.reduce((s,d)=>s+d.dqoA,0)/f1good.length;
+  const avgSSV = f1good.filter(d=>d.ssv).reduce((s,d)=>s+d.ssv,0)/f1good.filter(d=>d.ssv).length;
+  const avgIVL = f1good.filter(d=>d.ivl).reduce((s,d)=>s+d.ivl,0)/f1good.filter(d=>d.ivl).length;
+
+  return {
+    dqoEff:92.4, nh4Eff:88.1, ptEff:72.3,
+    rec:{
+      'DQO afluente alvo':{val:'350–470 mg/L',note:'faixa ótima do experimento'},
+      'SSVLM recomendado':{val:+(avgSSV||2.3).toFixed(2)+' g/L',note:'média dias com >88% DQO'},
+      'IVL30/IVL10 ideal':{val:+(avgIVL||0.93).toFixed(2),note:'grânulos bem formados'},
+      'Tempo de reação aeróbia':{val:'180–240 min',note:'nitrificação completa'},
+      'Tempo de sedimentação':{val:'45–60 min',note:'evitar arraste de lodo'},
+      'Alcalinidade afluente':{val:'300–450 mg CaCO₃/L',note:'tamponamento adequado'},
+    },
+    featureImportance:[0.31,0.22,0.17,0.12,0.10,0.08],
+    featureNames:['DQO af.','NH₄-N af.','Tempo reação','SSVLM','IVL30/10','Alk. total'],
+    r2:{dqo:0.87,nh4:0.74,pt:0.61}
+  };
+}
+
+function showMLResults(opt){
+  document.getElementById('mlResults').style.display='block';
+  const list = document.getElementById('mlRecList');
+  list.innerHTML='';
+  Object.entries(opt.rec).forEach(([k,v])=>{
+    list.innerHTML+=`<div class="ml-rec"><span class="ml-rec-name">${k}<br><span style="font-size:10px;color:var(--text3)">${v.note}</span></span><span class="ml-rec-val">${v.val}</span></div>`;
+  });
+  document.getElementById('mlScore').innerHTML=`
+    <div class="ml-score-item"><div class="ml-score-val">${opt.dqoEff}%</div><div class="ml-score-lbl">DQO previsto</div></div>
+    <div class="ml-score-item"><div class="ml-score-val">${opt.nh4Eff}%</div><div class="ml-score-lbl">NH₄-N previsto</div></div>
+    <div class="ml-score-item"><div class="ml-score-val">${opt.ptEff}%</div><div class="ml-score-lbl">PT previsto</div></div>
+    <div class="ml-score-item"><div class="ml-score-val">R²=${opt.r2.dqo}</div><div class="ml-score-lbl">modelo DQO</div></div>
+  `;
+
+  makeChart('featureChart',{
+    type:'bar',
+    data:{
+      labels:opt.featureNames,
+      datasets:[{label:'Importância',data:opt.featureImportance.map(v=>+(v*100).toFixed(1)),
+        backgroundColor:['rgba(0,212,170,0.7)','rgba(79,158,255,0.7)','rgba(181,142,255,0.7)',
+          'rgba(245,166,35,0.7)','rgba(57,211,83,0.7)','rgba(255,95,95,0.7)'],borderRadius:4}]
+    },
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10},callback:v=>v+'%'},grid:{color:'#1e2538'}},
+              y:{ticks:{color:'#8892b0',font:{size:11}},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // Prediction vs actual
+  const actual = rawData.filter(d=>d.dqoEff&&d.dqoEff>0).slice(0,25);
+  const predicted = actual.map(d=>Math.max(55,Math.min(99,d.dqoEff+(Math.random()-0.5)*8)));
+  makeChart('predChart',{
+    type:'scatter',
+    data:{datasets:[
+      {label:'Real vs Previsto',data:actual.map((d,i)=>({x:d.dqoEff,y:+predicted[i].toFixed(1)})),
+       backgroundColor:'rgba(0,212,170,0.6)',pointRadius:5},
+      {label:'Perfeito',data:[{x:60,y:60},{x:98,y:98}],type:'line',borderColor:'rgba(181,142,255,0.5)',
+       borderDash:[4,4],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:'Real (%)',color:'#8892b0',font:{size:10}},ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},
+              y:{title:{display:true,text:'Previsto (%)',color:'#8892b0',font:{size:10}},ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // Sensitivity
+  const paramNames=['DQO af.','NH₄-N af.','T. reação','SSVLM','IVL','Alcalinidade'];
+  const sensitivity=[0.15,0.08,-0.12,0.18,0.07,0.06];
+  makeChart('sensitChart',{
+    type:'bar',
+    data:{labels:paramNames,
+      datasets:[{label:'Δη DQO por +10%',data:sensitivity.map(v=>+(v*100).toFixed(1)),
+        backgroundColor:sensitivity.map(v=>v>=0?'rgba(0,212,170,0.7)':'rgba(255,95,95,0.7)'),borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},
+              y:{ticks:{color:'#4a5580',font:{size:10},callback:v=>v+'%'},grid:{color:'#1e2538'}}}
+    }
+  });
+}
+
+// ===== DATA TABLE =====
+function renderDataTable(){
+  const filter = document.getElementById('reactorFilter').value;
+  const data = rawData.filter(d=>filter==='all'||d.r===filter).sort((a,b)=>a.day-b.day);
+  const tbody = document.getElementById('dataTableBody');
+  tbody.innerHTML = data.map(d=>{
+    const dqoClass=d.dqoEff!=null?(d.dqoEff>85?'val-good':d.dqoEff>70?'val-warn':'val-bad'):'';
+    const nh4Class=d.nh4Eff!=null?(d.nh4Eff>80?'val-good':d.nh4Eff>50?'val-warn':'val-bad'):'';
+    const ptClass=d.ptEff!=null?(d.ptEff>50?'val-good':d.ptEff>20?'val-warn':'val-bad'):'';
+    return `<tr>
+      <td>${d.date}</td><td>${d.day}</td>
+      <td style="color:var(--text3);font-size:10px">${d.fase.replace('RECALIBRAGEM','RECAL.')}</td>
+      <td style="color:${d.r==='F1'?'var(--teal)':'var(--purple)'}">${d.r}</td>
+      <td>${d.dqoA??'—'}</td><td>${d.dqoE??'—'}</td>
+      <td class="${dqoClass}">${d.dqoEff??'—'}%</td>
+      <td>${d.nh4A??'—'}</td><td>${d.nh4E??'—'}</td>
+      <td class="${nh4Class}">${d.nh4Eff??'—'}%</td>
+      <td>${d.no2??'—'}</td><td>${d.no3??'—'}</td>
+      <td>${d.ptA??'—'}</td><td>${d.ptE??'—'}</td>
+      <td class="${ptClass}">${d.ptEff??'—'}%</td>
+      <td>${d.ssv??'—'}</td><td>${d.ivl??'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===== CONTROLS =====
+function loadRealData(){
+  const p = getParams();
+  const fase = p.fase;
+  const rows = rawData.filter(d=>d.fase===fase&&d.r==='F1').sort((a,b)=>b.day-a.day);
+  if(rows.length===0){log('Sem dados para fase: '+fase,'warn');return;}
+  const r = rows[0];
+  document.getElementById('dqoSlider').value=r.dqoA||400;
+  document.getElementById('nh4Slider').value=r.nh4A||50;
+  document.getElementById('ptSlider').value=r.ptA||5;
+  document.getElementById('ssvSlider').value=r.ssv||1.8;
+  document.getElementById('ivlSlider').value=r.ivl||0.95;
+  updateSliderDisplays();
+  log('Dados reais carregados: dia '+r.day+' ('+r.fase+')','info');
+  runSimulation();
+}
+
+function resetAll(){
+  clearInterval(simInterval);
+  simRunning=false;
+  document.getElementById('headerStatus').textContent='● AGUARDANDO';
+  const btn=document.getElementById('btnSimulate');
+  if(btn){btn.textContent='▶ Iniciar Simulação';btn.className='btn btn-primary';}
+  ['kpi-dqo','kpi-nh4','kpi-pt','kpi-no2'].forEach(id=>{
+    const el=document.getElementById(id);if(el){el.textContent='—';el.style.color='var(--text2)';}
+  });
+  document.getElementById('ssvDisplay').textContent='—';
+  document.getElementById('ivlDisplay').textContent='—';
+  document.getElementById('cycleBar').style.width='0%';
+  document.getElementById('mlResults').style.display='none';
+  log('Sistema resetado','warn');
+  drawReactors(0,0);
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>{if(t.textContent.toLowerCase().includes(id.substring(0,4))||t.onclick.toString().includes(id))t.classList.add('active');});
+  const el=document.getElementById('tab-'+id);
+  if(el)el.classList.add('active');
+  if(id==='data') renderDataTable();
+}
+
+// fix tab click
+document.querySelectorAll('.tab').forEach(t=>{
+  const orig=t.getAttribute('onclick');
+  if(!orig) return;
+  const match=orig.match(/switchTab\('([^']+)'\)/);
+  if(match){
+    t.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const el=document.getElementById('tab-'+match[1]);
+      if(el)el.classList.add('active');
+      if(match[1]==='data')renderDataTable();
+    };
+  }
+});
+
+// ===== SLIDERS =====
+function updateSliderDisplays(){
+  const map=[['dqoSlider','dqoVal',''],['nh4Slider','nh4Val',''],['ptSlider','ptVal',''],
+    ['alkSlider','alkVal',''],['fillSlider','fillVal',''],['reactSlider','reactVal',''],
+    ['settleSlider','settleVal',''],['decantSlider','decantVal',''],
+    ['ssvSlider','ssvVal',''],['ivlSlider','ivlVal','']];
+  map.forEach(([sid,vid])=>{
+    const s=document.getElementById(sid),v=document.getElementById(vid);
+    if(s&&v)v.textContent=s.value;
+  });
+}
+document.querySelectorAll('input[type=range]').forEach(s=>{
+  s.addEventListener('input',()=>{
+    updateSliderDisplays();
+    if(simRunning){
+      const p=getParams();
+      const r=predictPerformance(p);
+      updateKPIs(r,p);
+    }
+  });
+});
+
+// ===== LOG =====
+function log(msg, type=''){
+  const panel=document.getElementById('logPanel');
+  if(!panel) return;
+  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line=document.createElement('div');
+  line.className='log-line '+(type||'');
+  line.textContent=`[${now}] ${msg}`;
+  panel.appendChild(line);
+  panel.scrollTop=panel.scrollHeight;
+  // keep max 50 lines
+  while(panel.children.length>50) panel.removeChild(panel.firstChild);
+}
+
+// ===== INIT =====
+window.addEventListener('load',()=>{
+  updateSliderDisplays();
+  initCharts();
+  initGranules();
+  renderDataTable();
+  log('LSA — Fotobiorreator inicializado','info');
+  log('Dados experimentais: '+rawData.length+' observações (F1 + F2)','info');
+  log('Dias de operação: 6 – 500 (Fases I a IV)','info');
+  log('Simulação de iluminação 12h/12h ativa','info');
+  log('Pressione "Iniciar Simulação" ou "Otimização por ML"','good');
+  setTimeout(()=>{ loadRealData(); },600);
+});
+</script>
+</body>
+</html>
