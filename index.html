@@ -146,6 +146,25 @@ select:focus{border-color:var(--blue)}
 /* Progress ring */
 .progress-ring{display:inline-block}
 
+/* Reactor tabs */
+.rtab-wrap{display:flex;gap:0;margin-bottom:0}
+.rtab-btn{flex:1;padding:6px 4px;border-radius:var(--r) var(--r) 0 0;border:1px solid var(--border);border-bottom:none;background:var(--bg);color:var(--text3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.2s;line-height:1.2}
+.rtab-btn.active{background:var(--card2);color:var(--text)}
+.rtab-btn.r1.active{color:var(--teal);border-color:var(--teal2)}
+.rtab-btn.r2.active{color:var(--purple);border-color:var(--purple2)}
+.rtab-panel{background:var(--card2);border:1px solid var(--border);border-radius:0 0 var(--r) var(--r);padding:8px 8px 4px 8px;margin-bottom:6px}
+.rtab-panel.r1{border-top-color:var(--teal2)}
+.rtab-panel.r2{border-top-color:var(--purple2)}
+.reactor-label-r1{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(0,212,170,0.2)}
+.reactor-label-r2{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(181,142,255,0.2)}
+.btn-pause{background:#1a1244;color:#b48eff;border:1px solid var(--purple2)}
+.btn-pause:hover{background:#231855}
+.btn-stop{background:#1a0808;color:var(--red);border:1px solid var(--red2)}
+.btn-stop:hover{background:#2a0c0c}
+.kpi-r-badge{display:inline-block;font-size:9px;font-family:'JetBrains Mono',monospace;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle}
+.kpi-r1{background:rgba(0,212,170,0.1);color:var(--teal);border:1px solid rgba(0,212,170,0.3)}
+.kpi-r2{background:rgba(181,142,255,0.1);color:var(--purple);border:1px solid rgba(181,142,255,0.3)}
+
 /* Responsive */
 @media(max-width:900px){
   .layout{grid-template-columns:1fr}
@@ -171,65 +190,147 @@ select:focus{border-color:var(--blue)}
 <div class="layout">
   <!-- SIDEBAR PARAMS -->
   <aside class="sidebar">
+    <!-- Per-reactor tabbed params -->
     <div class="sidebar-section">
-      <div class="sidebar-title">Fase de Operação</div>
-      <select id="faseSelect">
-        <option value="FASE I">Fase I (dias 6–57)</option>
-        <option value="RECALIBRAGEM I">Recalibragem I (dias 61–89)</option>
-        <option value="FASE II">Fase II (dias 90–244)</option>
-        <option value="FASE III">Fase III (dias 250–379)</option>
-        <option value="FASE IV" selected>Fase IV (dias 383–500)</option>
-      </select>
+      <div class="sidebar-title">Configuração por Reator</div>
+      <div class="rtab-wrap">
+        <button id="tabBtnR1" class="rtab-btn r1 active" onclick="selectRtab(1)">⬤ Reator 1</button>
+        <button id="tabBtnR2" class="rtab-btn r2" onclick="selectRtab(2)">⬤ Reator 2</button>
+      </div>
+
+      <!-- ===== REATOR 1 PANEL ===== -->
+      <div class="rtab-panel r1" id="rtabPanel1">
+        <div class="reactor-label-r1">■ R1 — Afluente</div>
+        <div class="param-row">
+          <div class="param-label">Fase <span id="r1_faseDisplay" style="color:var(--teal);font-size:10px">FASE IV</span></div>
+          <select id="r1_faseSelect" style="font-size:11px;padding:4px 6px;margin-bottom:4px">
+            <option value="FASE I">Fase I (6–57)</option>
+            <option value="RECALIBRAGEM I">Recalib. I (61–89)</option>
+            <option value="FASE II">Fase II (90–244)</option>
+            <option value="FASE III">Fase III (250–379)</option>
+            <option value="FASE IV" selected>Fase IV (383–500)</option>
+          </select>
+        </div>
+        <div class="param-row">
+          <div class="param-label">DQO af. (mg/L) <span id="r1_dqoVal">450</span></div>
+          <input type="range" id="r1_dqoSlider" min="50" max="600" value="450" step="5" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">NH₄-N af. (mg/L) <span id="r1_nh4Val">55</span></div>
+          <input type="range" id="r1_nh4Slider" min="10" max="100" value="55" step="1" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">PT af. (mg/L) <span id="r1_ptVal">5.0</span></div>
+          <input type="range" id="r1_ptSlider" min="1" max="15" value="5" step="0.5" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Alcalinidade (mg/L) <span id="r1_alkVal">400</span></div>
+          <input type="range" id="r1_alkSlider" min="100" max="700" value="400" step="10" style="accent-color:var(--teal)">
+        </div>
+        <div class="reactor-label-r1" style="margin-top:8px">■ R1 — Ciclo</div>
+        <div class="param-row">
+          <div class="param-label">T. enchimento (min) <span id="r1_fillVal">30</span></div>
+          <input type="range" id="r1_fillSlider" min="10" max="90" value="30" step="5" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">T. reação aeróbia (min) <span id="r1_reactVal">180</span></div>
+          <input type="range" id="r1_reactSlider" min="60" max="360" value="180" step="10" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">T. sedimentação (min) <span id="r1_settleVal">45</span></div>
+          <input type="range" id="r1_settleSlider" min="20" max="120" value="45" step="5" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">T. descarte (min) <span id="r1_decantVal">20</span></div>
+          <input type="range" id="r1_decantSlider" min="10" max="60" value="20" step="5" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">SSVLM (g/L) <span id="r1_ssvVal">1.8</span></div>
+          <input type="range" id="r1_ssvSlider" min="0.5" max="4" value="1.8" step="0.1" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">IVL30/IVL10 <span id="r1_ivlVal">0.95</span></div>
+          <input type="range" id="r1_ivlSlider" min="0.5" max="1.1" value="0.95" step="0.01" style="accent-color:var(--teal)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Descarte <span id="r1_discardVal" style="color:var(--amber)">50%</span></div>
+          <select id="r1_discardSelect" style="font-size:11px;padding:4px 6px" onchange="updateDiscardLabels()">
+            <option value="25">25%</option><option value="50" selected>50%</option>
+            <option value="75">75%</option><option value="100">100%</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ===== REATOR 2 PANEL ===== -->
+      <div class="rtab-panel r2" id="rtabPanel2" style="display:none">
+        <div class="reactor-label-r2">■ R2 — Afluente</div>
+        <div class="param-row">
+          <div class="param-label">Fase <span id="r2_faseDisplay" style="color:var(--purple);font-size:10px">FASE IV</span></div>
+          <select id="r2_faseSelect" style="font-size:11px;padding:4px 6px;margin-bottom:4px">
+            <option value="FASE I">Fase I (6–57)</option>
+            <option value="RECALIBRAGEM I">Recalib. I (61–89)</option>
+            <option value="FASE II">Fase II (90–244)</option>
+            <option value="FASE III">Fase III (250–379)</option>
+            <option value="FASE IV" selected>Fase IV (383–500)</option>
+          </select>
+        </div>
+        <div class="param-row">
+          <div class="param-label">DQO af. (mg/L) <span id="r2_dqoVal">450</span></div>
+          <input type="range" id="r2_dqoSlider" min="50" max="600" value="450" step="5" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">NH₄-N af. (mg/L) <span id="r2_nh4Val">55</span></div>
+          <input type="range" id="r2_nh4Slider" min="10" max="100" value="55" step="1" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">PT af. (mg/L) <span id="r2_ptVal">5.0</span></div>
+          <input type="range" id="r2_ptSlider" min="1" max="15" value="5" step="0.5" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Alcalinidade (mg/L) <span id="r2_alkVal">400</span></div>
+          <input type="range" id="r2_alkSlider" min="100" max="700" value="400" step="10" style="accent-color:var(--purple)">
+        </div>
+        <div class="reactor-label-r2" style="margin-top:8px">■ R2 — Ciclo</div>
+        <div class="param-row">
+          <div class="param-label">T. enchimento (min) <span id="r2_fillVal">30</span></div>
+          <input type="range" id="r2_fillSlider" min="10" max="90" value="30" step="5" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">T. reação aeróbia (min) <span id="r2_reactVal">180</span></div>
+          <input type="range" id="r2_reactSlider" min="60" max="360" value="180" step="10" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">T. sedimentação (min) <span id="r2_settleVal">45</span></div>
+          <input type="range" id="r2_settleSlider" min="20" max="120" value="45" step="5" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">T. descarte (min) <span id="r2_decantVal">20</span></div>
+          <input type="range" id="r2_decantSlider" min="10" max="60" value="20" step="5" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">SSVLM (g/L) <span id="r2_ssvVal">1.8</span></div>
+          <input type="range" id="r2_ssvSlider" min="0.5" max="4" value="1.8" step="0.1" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">IVL30/IVL10 <span id="r2_ivlVal">0.95</span></div>
+          <input type="range" id="r2_ivlSlider" min="0.5" max="1.1" value="0.95" step="0.01" style="accent-color:var(--purple)">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Descarte <span id="r2_discardVal" style="color:var(--amber)">50%</span></div>
+          <select id="r2_discardSelect" style="font-size:11px;padding:4px 6px" onchange="updateDiscardLabels()">
+            <option value="25">25%</option><option value="50" selected>50%</option>
+            <option value="75">75%</option><option value="100">100%</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-secondary" style="font-size:11px;padding:6px;margin-top:2px" onclick="syncR1toR2()">↷ Clonar R1 → R2</button>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">Parâmetros de Entrada</div>
-      <div class="param-row">
-        <div class="param-label">DQO afluente (mg/L) <span id="dqoVal">450</span></div>
-        <input type="range" id="dqoSlider" min="50" max="600" value="450" step="5">
-      </div>
-      <div class="param-row">
-        <div class="param-label">NH₄-N afluente (mg/L) <span id="nh4Val">55</span></div>
-        <input type="range" id="nh4Slider" min="10" max="100" value="55" step="1">
-      </div>
-      <div class="param-row">
-        <div class="param-label">PT afluente (mg/L) <span id="ptVal">5.0</span></div>
-        <input type="range" id="ptSlider" min="1" max="15" value="5" step="0.5">
-      </div>
-      <div class="param-row">
-        <div class="param-label">Alcalinidade afluente (mg/L) <span id="alkVal">400</span></div>
-        <input type="range" id="alkSlider" min="100" max="700" value="400" step="10">
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">Configuração do Ciclo</div>
-      <div class="param-row">
-        <div class="param-label">T. enchimento (min) <span id="fillVal">30</span></div>
-        <input type="range" id="fillSlider" min="10" max="90" value="30" step="5">
-      </div>
-      <div class="param-row">
-        <div class="param-label">T. reação aeróbia (min) <span id="reactVal">180</span></div>
-        <input type="range" id="reactSlider" min="60" max="360" value="180" step="10">
-      </div>
-      <div class="param-row">
-        <div class="param-label">T. sedimentação (min) <span id="settleVal">45</span></div>
-        <input type="range" id="settleSlider" min="20" max="120" value="45" step="5">
-      </div>
-      <div class="param-row">
-        <div class="param-label">T. descarte (min) <span id="decantVal">20</span></div>
-        <input type="range" id="decantSlider" min="10" max="60" value="20" step="5">
-      </div>
-      <div class="param-row">
-        <div class="param-label">SSVLM (g/L) <span id="ssvVal">1.8</span></div>
-        <input type="range" id="ssvSlider" min="0.5" max="4" value="1.8" step="0.1">
-      </div>
-      <div class="param-row">
-        <div class="param-label">IVL30/IVL10 <span id="ivlVal">0.95</span></div>
-        <input type="range" id="ivlSlider" min="0.5" max="1.1" value="0.95" step="0.01">
-      </div>
-    </div>
+
     <div class="sidebar-section">
       <div class="sidebar-title">Controles</div>
       <button class="btn btn-primary" id="btnSimulate" onclick="runSimulation()">▶ Iniciar Simulação</button>
+      <button class="btn btn-pause" id="btnPause" onclick="pauseSimulation()" disabled>⏸ Pausar Simulação</button>
       <button class="btn btn-ml" onclick="runML()">⬡ Otimização por ML</button>
       <button class="btn btn-secondary" onclick="loadRealData()">↓ Carregar Dados Reais</button>
       <button class="btn btn-secondary" onclick="resetAll()">↺ Resetar</button>
@@ -243,31 +344,51 @@ select:focus{border-color:var(--blue)}
   <!-- MAIN CONTENT -->
   <main class="main">
 
-    <!-- KPI Row -->
-    <div class="grid-4" id="kpiGrid">
+    <!-- KPI Row — R1 + R2 comparison -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem" id="kpiGrid">
       <div class="kpi">
         <div class="kpi-label">Eficiência DQO</div>
-        <div class="kpi-value" id="kpi-dqo" style="color:var(--teal)">—</div>
+        <div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap">
+          <div class="kpi-value" id="kpi-dqo" style="color:var(--teal);font-size:1.3rem">—</div>
+          <div class="kpi-value" id="kpi-dqo-r2" style="color:var(--purple);font-size:1.1rem">—</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:2px">
+          <span class="kpi-r-badge kpi-r1">R1</span><span class="kpi-r-badge kpi-r2">R2</span>
+        </div>
         <div class="kpi-unit">% remoção</div>
-        <div class="kpi-delta" id="kpi-dqo-d"></div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Eficiência NH₄-N</div>
-        <div class="kpi-value" id="kpi-nh4" style="color:var(--blue)">—</div>
+        <div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap">
+          <div class="kpi-value" id="kpi-nh4" style="color:var(--blue);font-size:1.3rem">—</div>
+          <div class="kpi-value" id="kpi-nh4-r2" style="color:var(--purple);font-size:1.1rem">—</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:2px">
+          <span class="kpi-r-badge kpi-r1">R1</span><span class="kpi-r-badge kpi-r2">R2</span>
+        </div>
         <div class="kpi-unit">% remoção</div>
-        <div class="kpi-delta" id="kpi-nh4-d"></div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Eficiência PT</div>
-        <div class="kpi-value" id="kpi-pt" style="color:var(--purple)">—</div>
+        <div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap">
+          <div class="kpi-value" id="kpi-pt" style="color:var(--teal);font-size:1.3rem">—</div>
+          <div class="kpi-value" id="kpi-pt-r2" style="color:var(--purple);font-size:1.1rem">—</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:2px">
+          <span class="kpi-r-badge kpi-r1">R1</span><span class="kpi-r-badge kpi-r2">R2</span>
+        </div>
         <div class="kpi-unit">% remoção</div>
-        <div class="kpi-delta" id="kpi-pt-d"></div>
       </div>
       <div class="kpi">
         <div class="kpi-label">N-NO₂⁻</div>
-        <div class="kpi-value" id="kpi-no2" style="color:var(--amber)">—</div>
+        <div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap">
+          <div class="kpi-value" id="kpi-no2" style="color:var(--amber);font-size:1.3rem">—</div>
+          <div class="kpi-value" id="kpi-no2-r2" style="color:var(--purple);font-size:1.1rem">—</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:2px">
+          <span class="kpi-r-badge kpi-r1">R1</span><span class="kpi-r-badge kpi-r2">R2</span>
+        </div>
         <div class="kpi-unit">mg/L efluente</div>
-        <div class="kpi-delta" id="kpi-no2-d"></div>
       </div>
     </div>
 
@@ -277,15 +398,9 @@ select:focus{border-color:var(--blue)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Fotobiorreator em Batelada Sequencial — Escala Laboratorial (4L, 50% troca)</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <div style="font-size:10px;color:var(--text3)">Descarte:</div>
-          <select id="discardPct" style="width:auto;font-size:11px;padding:3px 8px" onchange="updateDiscardLabel()">
-            <option value="25">25%</option>
-            <option value="50" selected>50%</option>
-            <option value="75">75%</option>
-            <option value="100">100%</option>
-          </select>
           <div id="lightBadge" style="font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:4px;border:1px solid #c4841a;color:#f5a623;background:rgba(245,166,35,0.1)">☀ DIA — 12h</div>
-          <div style="font-size:10px;color:var(--text3)">Tempo real: <span id="simTimeDisplay" style="color:var(--teal);font-family:'JetBrains Mono',monospace">00:00</span></div>
+          <div style="font-size:10px;color:var(--text3)">Tempo: <span id="simTimeDisplay" style="color:var(--teal);font-family:'JetBrains Mono',monospace">00:00</span></div>
+          <div style="font-size:10px;color:var(--text3)">Descarte: <span id="discardDisplay" style="color:var(--amber);font-family:'JetBrains Mono',monospace;font-size:10px">R1:50% R2:50%</span></div>
         </div>
       </div>
       <!-- Main reactor canvas area -->
@@ -295,60 +410,96 @@ select:focus{border-color:var(--blue)}
           <canvas id="reactorCanvas" width="480" height="340" style="width:100%;border-radius:var(--r);display:block"></canvas>
         </div>
         <!-- Right panel: cycle + status -->
-        <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:10px">
-          <!-- Cycle steps -->
-          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
-            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Etapa atual do ciclo</div>
-            <div class="cycle-steps" id="cycleSteps" style="flex-direction:column;gap:4px;display:flex">
-              <div class="cycle-step step-fill" id="stepFill" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● ENCHIMENTO</div>
-              <div class="cycle-step step-react" id="stepReact" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● REAÇÃO AERÓBIA</div>
-              <div class="cycle-step step-settle" id="stepSettle" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● SEDIMENTAÇÃO</div>
-              <div class="cycle-step step-decant" id="stepDecant" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● DESCARTE</div>
-              <div class="cycle-step step-idle" id="stepIdle" style="border-right:none;border-radius:4px;padding:5px 8px;font-size:10px">● REPOUSO</div>
+        <div style="flex:1;min-width:190px;display:flex;flex-direction:column;gap:8px">
+          <!-- R1 Cycle -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:8px;border-left:2px solid var(--teal2)">
+            <div style="font-size:10px;color:var(--teal);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">⬤ R1 — Etapa do ciclo</div>
+            <div style="display:flex;flex-direction:column;gap:3px" id="cycleStepsR1">
+              <div class="cycle-step step-fill" id="r1_stepFill" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● ENCHIMENTO</div>
+              <div class="cycle-step step-react" id="r1_stepReact" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● REAÇÃO AERÓBIA</div>
+              <div class="cycle-step step-settle" id="r1_stepSettle" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● SEDIMENTAÇÃO</div>
+              <div class="cycle-step step-decant" id="r1_stepDecant" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● DESCARTE</div>
+              <div class="cycle-step step-idle" id="r1_stepIdle" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● REPOUSO</div>
+            </div>
+            <div style="margin-top:5px">
+              <div style="background:var(--border);border-radius:3px;height:4px">
+                <div id="r1_cycleBar" style="height:4px;background:var(--teal);border-radius:3px;width:0%;transition:width 0.3s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px;color:var(--text3)">
+                <span id="r1_cycleTime">0 min</span><span id="r1_cycleTotalTime">— min</span>
+              </div>
             </div>
           </div>
-          <!-- Progress bar -->
-          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Progresso do ciclo</div>
-            <div style="background:var(--border);border-radius:3px;height:5px">
-              <div id="cycleBar" style="height:5px;background:var(--teal);border-radius:3px;width:0%;transition:width 0.3s"></div>
+
+          <!-- R2 Cycle -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:8px;border-left:2px solid var(--purple2)">
+            <div style="font-size:10px;color:var(--purple);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">⬤ R2 — Etapa do ciclo</div>
+            <div style="display:flex;flex-direction:column;gap:3px" id="cycleStepsR2">
+              <div class="cycle-step step-fill" id="r2_stepFill" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● ENCHIMENTO</div>
+              <div class="cycle-step step-react" id="r2_stepReact" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● REAÇÃO AERÓBIA</div>
+              <div class="cycle-step step-settle" id="r2_stepSettle" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● SEDIMENTAÇÃO</div>
+              <div class="cycle-step step-decant" id="r2_stepDecant" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● DESCARTE</div>
+              <div class="cycle-step step-idle" id="r2_stepIdle" style="border-right:none;border-radius:4px;padding:4px 8px;font-size:10px">● REPOUSO</div>
             </div>
-            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--text3)">
-              <span id="cycleTime">0 min</span><span id="cycleTotalTime">— min</span>
+            <div style="margin-top:5px">
+              <div style="background:var(--border);border-radius:3px;height:4px">
+                <div id="r2_cycleBar" style="height:4px;background:var(--purple);border-radius:3px;width:0%;transition:width 0.3s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px;color:var(--text3)">
+                <span id="r2_cycleTime">0 min</span><span id="r2_cycleTotalTime">— min</span>
+              </div>
             </div>
           </div>
+
           <!-- Nutrient feed display -->
-          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
-            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Afluente — CHONPS</div>
-            <div id="nutrientDisplay" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;font-family:'JetBrains Mono',monospace"></div>
+          <div style="background:var(--bg);border-radius:var(--r);padding:8px">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Afluente — CHONPS</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px">
+              <span style="font-size:9px;color:var(--teal);font-weight:700">R1</span>
+              <div id="nutrientDisplayR1" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:9px;font-family:'JetBrains Mono',monospace;flex:1"></div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <span style="font-size:9px;color:var(--purple);font-weight:700">R2</span>
+              <div id="nutrientDisplayR2" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:9px;font-family:'JetBrains Mono',monospace;flex:1"></div>
+            </div>
           </div>
-          <!-- Granule status -->
-          <div style="background:var(--bg);border-radius:var(--r);padding:10px">
-            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Estado da Biomassa</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-              <div style="text-align:center">
-                <div style="font-size:9px;color:var(--text3)">SSVLM</div>
-                <div style="font-size:1rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--teal)" id="ssvDisplay">—</div>
+
+          <!-- Biomass status -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:8px">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Biomassa & Grânulos</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px">
+              <div>
+                <div style="color:var(--text3)">SSV R1</div>
+                <div style="color:var(--teal);font-family:'JetBrains Mono',monospace;font-weight:800" id="ssvDisplayR1">—</div>
               </div>
-              <div style="text-align:center">
-                <div style="font-size:9px;color:var(--text3)">IVL30/10</div>
-                <div style="font-size:1rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--blue)" id="ivlDisplay">—</div>
+              <div>
+                <div style="color:var(--text3)">SSV R2</div>
+                <div style="color:var(--purple);font-family:'JetBrains Mono',monospace;font-weight:800" id="ssvDisplayR2">—</div>
               </div>
-              <div style="text-align:center">
-                <div style="font-size:9px;color:var(--text3)">Grânulos</div>
-                <div style="font-size:0.9rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)" id="granuleStatus">—</div>
+              <div>
+                <div style="color:var(--text3)">IVL R1</div>
+                <div style="color:var(--blue);font-family:'JetBrains Mono',monospace;font-weight:700" id="ivlDisplayR1">—</div>
               </div>
-              <div style="text-align:center">
-                <div style="font-size:9px;color:var(--text3)">Descarte</div>
-                <div style="font-size:0.9rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--amber)" id="discardDisplay">50%</div>
+              <div>
+                <div style="color:var(--text3)">IVL R2</div>
+                <div style="color:var(--blue);font-family:'JetBrains Mono',monospace;font-weight:700" id="ivlDisplayR2">—</div>
+              </div>
+              <div>
+                <div style="color:var(--text3)">Grânulos</div>
+                <div style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:700" id="granuleStatus">—</div>
+              </div>
+              <div>
+                <div style="color:var(--text3)">Descarte</div>
+                <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;font-weight:700" id="discardDisplay">R1:50% R2:50%</div>
               </div>
             </div>
           </div>
+
           <!-- Photoperiod clock -->
-          <div style="background:var(--bg);border-radius:var(--r);padding:10px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Fotoperíodo 12h/12h</div>
-            <canvas id="clockCanvas" width="100" height="100" style="width:80px;height:80px;display:block;margin:0 auto"></canvas>
-            <div style="font-size:10px;color:var(--text3);margin-top:4px" id="clockLabel">— h de operação</div>
+          <div style="background:var(--bg);border-radius:var(--r);padding:8px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:5px">Fotoperíodo 12h/12h</div>
+            <canvas id="clockCanvas" width="100" height="100" style="width:76px;height:76px;display:block;margin:0 auto"></canvas>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px" id="clockLabel">— h de operação</div>
           </div>
         </div>
       </div>
@@ -359,7 +510,7 @@ select:focus{border-color:var(--blue)}
       <div class="tab active" onclick="switchTab('performance')">Desempenho</div>
       <div class="tab" onclick="switchTab('granules')">Grânulos</div>
       <div class="tab" onclick="switchTab('ml')">Otimização ML</div>
-      <div class="tab" onclick="switchTab('data')">Dados Reais</div>
+      <!-- <div class="tab" onclick="switchTab('data')">Dados Reais</div> -->
     </div>
 
     <!-- Tab: Performance -->
@@ -742,25 +893,58 @@ function initCharts(){
 }
 
 // ===== SIMULATION =====
-let simInterval = null;
+const simIntervals = [null, null];
 let cyclePhase = 0;
 let cycleProgress = 0;
-let simRunning = false;
+const simRunningState = [false, false];
+let simPaused = false;
+let animFrameId = null;
+let activeRtab = 1; // which tab is visible (1 or 2)
 
-function getParams(){
+// Backward compat: simRunning checks if any reactor is running
+Object.defineProperty(window,'simRunning',{get:()=>simRunningState[0]||simRunningState[1],set:v=>{simRunningState[0]=v;simRunningState[1]=v;}});
+
+function getReactorParams(ri){
+  const p = ri === 0 ? 'r1' : 'r2';
   return {
-    dqoA: +document.getElementById('dqoSlider').value,
-    nh4A: +document.getElementById('nh4Slider').value,
-    ptA: +document.getElementById('ptSlider').value,
-    alk: +document.getElementById('alkSlider').value,
-    fill: +document.getElementById('fillSlider').value,
-    react: +document.getElementById('reactSlider').value,
-    settle: +document.getElementById('settleSlider').value,
-    decant: +document.getElementById('decantSlider').value,
-    ssv: +document.getElementById('ssvSlider').value,
-    ivl: +document.getElementById('ivlSlider').value,
-    fase: document.getElementById('faseSelect').value
+    dqoA: +document.getElementById(p+'_dqoSlider').value,
+    nh4A: +document.getElementById(p+'_nh4Slider').value,
+    ptA: +document.getElementById(p+'_ptSlider').value,
+    alk: +document.getElementById(p+'_alkSlider').value,
+    fill: +document.getElementById(p+'_fillSlider').value,
+    react: +document.getElementById(p+'_reactSlider').value,
+    settle: +document.getElementById(p+'_settleSlider').value,
+    decant: +document.getElementById(p+'_decantSlider').value,
+    ssv: +document.getElementById(p+'_ssvSlider').value,
+    ivl: +document.getElementById(p+'_ivlSlider').value,
+    fase: document.getElementById(p+'_faseSelect').value,
+    discardPct: +document.getElementById(p+'_discardSelect').value
   };
+}
+
+// Backward compat — returns R1 params
+function getParams(){ return getReactorParams(0); }
+
+// Tab switching
+function selectRtab(ri){
+  activeRtab = ri;
+  document.getElementById('rtabPanel1').style.display = ri===1?'':'none';
+  document.getElementById('rtabPanel2').style.display = ri===2?'':'none';
+  document.getElementById('tabBtnR1').classList.toggle('active', ri===1);
+  document.getElementById('tabBtnR2').classList.toggle('active', ri===2);
+}
+
+// Clone R1 → R2
+function syncR1toR2(){
+  const fields=['dqoSlider','nh4Slider','ptSlider','alkSlider','fillSlider','reactSlider','settleSlider','decantSlider','ssvSlider','ivlSlider'];
+  fields.forEach(f=>{
+    const v = document.getElementById('r1_'+f).value;
+    document.getElementById('r2_'+f).value = v;
+  });
+  document.getElementById('r2_faseSelect').value = document.getElementById('r1_faseSelect').value;
+  document.getElementById('r2_discardSelect').value = document.getElementById('r1_discardSelect').value;
+  updateSliderDisplays();
+  log('Parâmetros R1 copiados para R2','info');
 }
 
 function predictPerformance(p){
@@ -798,54 +982,124 @@ function predictPerformance(p){
 
 function runSimulation(){
   const btn = document.getElementById('btnSimulate');
-  if(simRunning){
-    clearInterval(simInterval);
-    simRunning=false;
-    document.getElementById('headerStatus').textContent='● PAUSADO';
-    if(btn){btn.textContent='▶ Iniciar Simulação';btn.className='btn btn-primary';}
-    log('Simulação pausada','warn');
+  const btnP = document.getElementById('btnPause');
+  // If already running, stop everything
+  if(simRunningState[0]||simRunningState[1]){
+    stopAllSimulation();
+    log('Simulação encerrada','warn');
     return;
   }
-  simRunning = true;
+  // Start both reactors
+  simRunningState[0]=true; simRunningState[1]=true;
+  simPaused=false;
   document.getElementById('headerStatus').textContent='● SIMULANDO';
-  if(btn){btn.textContent='⏸ Pausar Simulação';btn.className='btn btn-pause';}
-  log('Simulação iniciada com parâmetros atuais','info');
-  const p = getParams();
-  document.getElementById('headerPhase').textContent=p.fase;
-  const result = predictPerformance(p);
-  updateKPIs(result, p);
-  updateReactors(p, result);
-  animateCycle(p);
+  if(btn){btn.textContent='⏹ Parar Simulação';btn.className='btn btn-stop';}
+  if(btnP){btnP.disabled=false;btnP.textContent='⏸ Pausar Simulação';btnP.className='btn btn-pause';}
+  log('Simulação iniciada — R1 e R2 rodando independentemente','info');
+
+  const p1 = getReactorParams(0);
+  const p2 = getReactorParams(1);
+  document.getElementById('headerPhase').textContent=p1.fase+'/'+p2.fase;
+  const r1 = predictPerformance(p1);
+  const r2 = predictPerformance(p2);
+  updateKPIs(r1, p1, r2, p2);
+  updateReactors(p1, p2, r1, r2);
+  animateCycle(p1, 0);
+  animateCycle(p2, 1);
+  startReactorLoop();
 }
 
-function updateKPIs(result, p){
-  const eff = (id,v,unit)=>{
+function pauseSimulation(){
+  const btnP = document.getElementById('btnPause');
+  if(!simRunningState[0]&&!simRunningState[1]) return;
+  simPaused = !simPaused;
+  if(simPaused){
+    // Stop all intervals AND animation frame
+    simIntervals.forEach((_,i)=>{clearInterval(simIntervals[i]);simIntervals[i]=null;});
+    if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+    document.getElementById('headerStatus').textContent='⏸ PAUSADO';
+    if(btnP){btnP.textContent='▶ Retomar Simulação';btnP.className='btn btn-primary';}
+    log('Simulação PAUSADA — todas as atividades suspensas','warn');
+  } else {
+    // Resume animation and cycle timers
+    startReactorLoop();
+    if(simRunningState[0]) animateCycle(getReactorParams(0), 0);
+    if(simRunningState[1]) animateCycle(getReactorParams(1), 1);
+    document.getElementById('headerStatus').textContent='● SIMULANDO';
+    if(btnP){btnP.textContent='⏸ Pausar Simulação';btnP.className='btn btn-pause';}
+    log('Simulação retomada','info');
+  }
+}
+
+function stopAllSimulation(){
+  simRunningState[0]=false; simRunningState[1]=false; simPaused=false;
+  simIntervals.forEach((_,i)=>{clearInterval(simIntervals[i]);simIntervals[i]=null;});
+  if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+  document.getElementById('headerStatus').textContent='● AGUARDANDO';
+  const btn=document.getElementById('btnSimulate');
+  const btnP=document.getElementById('btnPause');
+  if(btn){btn.textContent='▶ Iniciar Simulação';btn.className='btn btn-primary';}
+  if(btnP){btnP.disabled=true;btnP.textContent='⏸ Pausar Simulação';btnP.className='btn btn-pause';}
+}
+
+function updateKPIs(result, p, result2, p2){
+  const effSet = (id,v)=>{
     const el=document.getElementById(id);
-    if(el){el.textContent=v!==null?v+(unit||'%'):'—';
+    if(el){el.textContent=v!==null&&v!==undefined?v+'%':'—';
       el.style.color=v>80?'var(--teal)':v>60?'var(--amber)':'var(--red)';}
   };
-  eff('kpi-dqo',result.dqoEff);
-  eff('kpi-nh4',result.nh4Eff);
-  eff('kpi-pt',result.ptEff);
+  const effSetR2 = (id,v)=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=v!==null&&v!==undefined?v+'%':'—';
+      el.style.color=v>80?'var(--purple)':v>60?'var(--amber)':'var(--red)';}
+  };
+  effSet('kpi-dqo', result.dqoEff);
+  effSet('kpi-nh4', result.nh4Eff);
+  effSet('kpi-pt', result.ptEff);
   const no2El=document.getElementById('kpi-no2');
   if(no2El){no2El.textContent=result.no2+' mg/L';
     no2El.style.color=result.no2<2?'var(--green)':result.no2<8?'var(--amber)':'var(--red)';}
-  document.getElementById('ssvDisplay').textContent=p.ssv.toFixed(1)+' g/L';
-  document.getElementById('ivlDisplay').textContent=p.ivl.toFixed(2);
+  // R2 KPIs
+  if(result2){
+    effSetR2('kpi-dqo-r2', result2.dqoEff);
+    effSetR2('kpi-nh4-r2', result2.nh4Eff);
+    effSetR2('kpi-pt-r2', result2.ptEff);
+    const no2R2=document.getElementById('kpi-no2-r2');
+    if(no2R2){no2R2.textContent=result2.no2+' mg/L';
+      no2R2.style.color=result2.no2<2?'var(--green)':result2.no2<8?'var(--amber)':'var(--red)';}
+  }
+  // Biomass
+  const p1=p||getReactorParams(0);
+  const p2v=p2||getReactorParams(1);
+  const s1=document.getElementById('ssvDisplayR1');
+  const s2=document.getElementById('ssvDisplayR2');
+  const i1=document.getElementById('ivlDisplayR1');
+  const i2=document.getElementById('ivlDisplayR2');
+  if(s1) s1.textContent=p1.ssv.toFixed(1)+' g/L';
+  if(s2) s2.textContent=p2v.ssv.toFixed(1)+' g/L';
+  if(i1) i1.textContent=p1.ivl.toFixed(2);
+  if(i2) i2.textContent=p2v.ivl.toFixed(2);
+  // Legacy (backward compat for existing code refs)
+  const legSSV=document.getElementById('ssvDisplay');
+  const legIVL=document.getElementById('ivlDisplay');
+  if(legSSV) legSSV.textContent=p1.ssv.toFixed(1)+' g/L';
+  if(legIVL) legIVL.textContent=p1.ivl.toFixed(2);
 }
 
-function animateCycle(p){
-  const phases=['ENCHIMENTO','REAÇÃO','SEDIM.','DESCARTE','REPOUSO'];
+function animateCycle(p, ri){
+  const rn = ri===0?'r1':'r2';
   const times=[p.fill,p.react,p.settle,p.decant,10];
   const total=times.reduce((a,b)=>a+b,0);
-  const stepEls=['stepFill','stepReact','stepSettle','stepDecant','stepIdle'];
+  const stepIds=[rn+'_stepFill',rn+'_stepReact',rn+'_stepSettle',rn+'_stepDecant',rn+'_stepIdle'];
   let elapsed=0;
   let phaseIdx=0;
   let phaseElapsed=0;
-  document.getElementById('cycleTotalTime').textContent=total+' min total';
+  const totalEl=document.getElementById(rn+'_cycleTotalTime');
+  if(totalEl) totalEl.textContent=total+' min total';
 
-  clearInterval(simInterval);
-  simInterval=setInterval(()=>{
+  clearInterval(simIntervals[ri]);
+  simIntervals[ri]=setInterval(()=>{
+    if(simPaused) return;
     elapsed+=2;
     if(elapsed>total) elapsed=0;
     let acc=0;
@@ -853,109 +1107,147 @@ function animateCycle(p){
       acc+=times[i];
       if(elapsed<=acc){phaseIdx=i;phaseElapsed=elapsed-(acc-times[i]);break;}
     }
-    stepEls.forEach((id,i)=>{
+    stepIds.forEach((id,i)=>{
       const el=document.getElementById(id);
       if(!el) return;
       el.style.opacity=i===phaseIdx?'1':'0.4';
       el.style.transform=i===phaseIdx?'scaleY(1.08)':'scaleY(1)';
     });
     const pct=(elapsed/total*100).toFixed(0);
-    document.getElementById('cycleBar').style.width=pct+'%';
-    document.getElementById('cycleTime').textContent=elapsed+' / '+total+' min';
-    // sync canvas state
-    rState.phase=phaseIdx;
-    rState.pct=phaseElapsed/times[phaseIdx];
-    rState.simMinutes+=2;
+    const bar=document.getElementById(rn+'_cycleBar');
+    const timeEl=document.getElementById(rn+'_cycleTime');
+    if(bar) bar.style.width=pct+'%';
+    if(timeEl) timeEl.textContent=elapsed+' / '+total+' min';
+    // sync per-reactor canvas state
+    rStates[ri].phase=phaseIdx;
+    rStates[ri].pct=phaseElapsed/Math.max(1,times[phaseIdx]);
+    rStates[ri].simMinutes+=2;
+    rStates[ri].discardPct=p.discardPct||50;
+    // Update KPIs live when params change
+    if(elapsed%20===0){
+      const pr=getReactorParams(ri);
+      const res=predictPerformance(pr);
+      if(ri===0) updateKPIs(res,pr,null,null);
+      else {
+        const r1=getReactorParams(0);const res1=predictPerformance(r1);
+        updateKPIs(res1,r1,res,pr);
+      }
+    }
   },200);
 }
 
 // ===== CANVAS PHOTOBIOREACTOR =====
-const rState = {
-  phase: 0,         // 0=fill 1=react 2=settle 3=decant 4=idle
-  pct: 0,           // 0-1 progress within phase
-  simHour: 0,       // 0-23 simulated hour
-  lightOn: true,    // photoperiod
-  granDay: 0,       // operational day for granule maturity
-  granules: [],     // {x,y,r,color,vx,vy} particles
-  bubbles: [],
-  feedDrops: [],
-  discardStream: false,
-  discardPct: 50,
-  liquidFillF1: 0.55,
-  liquidFillF2: 0.55,
-  biofilm: 0,       // 0-1 green biofilm intensity
-  algaeColor: 0,    // 0-1 bright yellow-green intensity
-  tick: 0,
-  simMinutes: 0,
-};
+function makeReactorState(){
+  return {
+    phase: 0, pct: 0,
+    simHour: 0, lightOn: true,
+    granDay: 0, granules: [],
+    bubbles: [], feedDrops: [],
+    discardStream: false, discardPct: 50,
+    biofilm: 0, algaeColor: 0,
+    tick: 0, simMinutes: 0
+  };
+}
+const rStates = [makeReactorState(), makeReactorState()];
+// Backward compat alias
+const rState = rStates[0];
 
-// Init granules
+// Init granules for both reactors
 function initGranules(){
-  rState.granules = [];
-  const n = 60;
-  for(let i=0;i<n;i++){
-    rState.granules.push({
-      x: 0.15+Math.random()*0.7,
-      y: 0.5+Math.random()*0.45,
-      r: 1.5+Math.random()*4,
-      color: `hsl(${100+Math.random()*40},${60+Math.random()*30}%,${35+Math.random()*25}%)`,
-      vx:(Math.random()-0.5)*0.001,
-      vy:(Math.random()-0.5)*0.001,
-      settled: Math.random()>0.5
-    });
-  }
-  rState.bubbles = [];
-  rState.feedDrops = [];
+  rStates.forEach(rs=>{
+    rs.granules = [];
+    const n = 60;
+    for(let i=0;i<n;i++){
+      rs.granules.push({
+        x: 0.15+Math.random()*0.7,
+        y: 0.5+Math.random()*0.45,
+        r: 1.5+Math.random()*4,
+        color: `hsl(${100+Math.random()*40},${60+Math.random()*30}%,${35+Math.random()*25}%)`,
+        vx:(Math.random()-0.5)*0.001,
+        vy:(Math.random()-0.5)*0.001,
+        settled: Math.random()>0.5
+      });
+    }
+    rs.bubbles = [];
+    rs.feedDrops = [];
+  });
 }
 
-function updateDiscardLabel(){
-  const v = document.getElementById('discardPct').value;
-  rState.discardPct = +v;
-  const el=document.getElementById('discardDisplay');
-  if(el) el.textContent=v+'%';
+function updateDiscardLabels(){
+  [0,1].forEach(ri=>{
+    const rn=ri===0?'r1':'r2';
+    const el=document.getElementById(rn+'_discardSelect');
+    if(!el) return;
+    const v=el.value;
+    rStates[ri].discardPct=+v;
+    const dv=document.getElementById(rn+'_discardVal');
+    if(dv) dv.textContent=v+'%';
+  });
+  const dd=document.getElementById('discardDisplay');
+  const r1v=(document.getElementById('r1_discardSelect')||{}).value||50;
+  const r2v=(document.getElementById('r2_discardSelect')||{}).value||50;
+  if(dd) dd.textContent='R1:'+r1v+'% R2:'+r2v+'%';
 }
+// Backward compat
+function updateDiscardLabel(){ updateDiscardLabels(); }
 
-function drawNutrients(p){
-  const el=document.getElementById('nutrientDisplay');
+function drawNutrientsPanel(p, elId){
+  const el=document.getElementById(elId);
   if(!el) return;
   const items=[
-    {lbl:'C (DQO)',val:p.dqoA+' mg/L',c:'#00d4aa'},
-    {lbl:'N (NH₄)',val:p.nh4A+' mg/L',c:'#4f9eff'},
-    {lbl:'P (PT)',val:p.ptA+' mg/L',c:'#b48eff'},
-    {lbl:'Alk.',val:p.alk+' mg/L',c:'#f5a623'},
-    {lbl:'NaHCO₃',val:'12.5',c:'#8892b0'},
-    {lbl:'Glicose',val:'24.5',c:'#39d353'},
+    {lbl:'DQO',val:p.dqoA,c:'#00d4aa'},
+    {lbl:'NH₄',val:p.nh4A,c:'#4f9eff'},
+    {lbl:'PT',val:p.ptA,c:'#b48eff'},
+    {lbl:'Alk',val:p.alk,c:'#f5a623'},
   ];
   el.innerHTML=items.map(i=>`
-    <div style="padding:2px 4px;background:rgba(255,255,255,0.03);border-radius:3px">
-      <div style="font-size:9px;color:#4a5580">${i.lbl}</div>
-      <div style="color:${i.c};font-size:10px">${i.val}</div>
+    <div style="padding:1px 3px;background:rgba(255,255,255,0.03);border-radius:2px">
+      <div style="font-size:8px;color:#4a5580">${i.lbl}</div>
+      <div style="color:${i.c};font-size:9px">${i.val}</div>
     </div>`).join('');
 }
 
-function drawReactorCanvas(phase, pct, p){
+function drawNutrients(p){
+  drawNutrientsPanel(p,'nutrientDisplayR1');
+  const p2=getReactorParams(1);
+  drawNutrientsPanel(p2,'nutrientDisplayR2');
+}
+
+function drawReactorCanvas(phases, pcts, params){
   const canvas = document.getElementById('reactorCanvas');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const W=canvas.width, H=canvas.height;
-  rState.tick++;
-  rState.phase=phase; rState.pct=pct;
 
-  // Advance simulation hour
-  if(rState.tick%25===0){
-    rState.simHour=(rState.simHour+1)%24;
-    rState.lightOn = rState.simHour>=6 && rState.simHour<18;
+  // Advance GLOBAL tick (for shared visual like lighting)
+  rStates[0].tick++;
+  // Advance R2 tick independently
+  rStates[1].tick++;
+
+  // Use R1 state for shared photoperiod display
+  const rs0 = rStates[0];
+  if(rs0.tick%25===0){
+    rs0.simHour=(rs0.simHour+1)%24;
+    rs0.lightOn = rs0.simHour>=6 && rs0.simHour<18;
     const ld=document.getElementById('lightBadge');
     if(ld){
-      ld.textContent=rState.lightOn?`☀ DIA — ${rState.simHour}h`:`☽ NOITE — ${rState.simHour}h`;
-      ld.style.borderColor=rState.lightOn?'#c4841a':'#3a4570';
-      ld.style.color=rState.lightOn?'#f5a623':'#8892b0';
-      ld.style.background=rState.lightOn?'rgba(245,166,35,0.1)':'rgba(74,85,128,0.1)';
+      ld.textContent=rs0.lightOn?`☀ DIA — ${rs0.simHour}h`:`☽ NOITE — ${rs0.simHour}h`;
+      ld.style.borderColor=rs0.lightOn?'#c4841a':'#3a4570';
+      ld.style.color=rs0.lightOn?'#f5a623':'#8892b0';
+      ld.style.background=rs0.lightOn?'rgba(245,166,35,0.1)':'rgba(74,85,128,0.1)';
     }
-    if(rState.tick%600===0) rState.granDay++;
+    if(rs0.tick%600===0){rs0.granDay++;rStates[1].granDay++;}
+    // Sync R2 lighting too
+    rStates[1].simHour=rs0.simHour;
+    rStates[1].lightOn=rs0.lightOn;
   }
-  rState.biofilm = Math.min(1, rState.granDay/60);
-  rState.algaeColor = rState.lightOn ? Math.min(1, rState.granDay/30)*0.9 : Math.min(1,rState.granDay/30)*0.2;
+  rStates.forEach(rs=>{
+    rs.biofilm = Math.min(1, rs.granDay/60);
+    rs.algaeColor = rs.lightOn ? Math.min(1, rs.granDay/30)*0.9 : Math.min(1,rs.granDay/30)*0.2;
+  });
+  // shorthand for rendering
+  const phase=phases[0]||0, pct=pcts[0]||0;
+  const rState=rStates[0]; // for backward compat in rendering code below
 
   // --- BACKGROUND: white cabinet interior ---
   ctx.fillStyle='#eeece6';
@@ -1005,13 +1297,16 @@ function drawReactorCanvas(phase, pct, p){
 
   reactors.forEach((r,ri)=>{
     const cx=r.cx, tubW=62, tubH=230, tubX=cx-tubW/2, tubY=30;
-    const discardFrac = rState.discardPct/100;
-    const liquidFill = phase===0 ? 0.32+pct*0.33
-                     : phase===3 ? Math.max(0.18, 0.65-pct*discardFrac*0.65)
+    const rs = rStates[ri]; // per-reactor state
+    const riPhase = phases[ri]||0;
+    const riPct = pcts[ri]||0;
+    const discardFrac = rs.discardPct/100;
+    const liquidFill = riPhase===0 ? 0.32+riPct*0.33
+                     : riPhase===3 ? Math.max(0.18, 0.65-riPct*discardFrac*0.65)
                      : 0.65;
     const liquidTop = tubY + tubH*(1-liquidFill);
-    const algaeIntensity = rState.algaeColor;
-    const biofilmIntensity = rState.biofilm;
+    const algaeIntensity = rs.algaeColor;
+    const biofilmIntensity = rs.biofilm;
 
     // Tube exterior with algae/biofilm
     const tg=ctx.createLinearGradient(tubX,0,tubX+tubW,0);
@@ -1035,7 +1330,7 @@ function drawReactorCanvas(phase, pct, p){
         ctx.fillStyle=`rgba(${15+sp%25},${50+sp%35},${8+sp%15},${0.28+biofilmIntensity*0.38})`;
         ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();
       }
-      if(rState.lightOn && algaeIntensity>0.15){
+      if(rs.lightOn && algaeIntensity>0.15){
         for(let ap=0;ap<6;ap++){
           const ax=tubX+5+((ap*47)%52);
           const ay=tubY+15+((ap*67)%(tubH-30));
@@ -1049,9 +1344,9 @@ function drawReactorCanvas(phase, pct, p){
     // Liquid inside tube
     ctx.save();
     ctx.beginPath(); roundRect(ctx,tubX+2,tubY+2,tubW-4,tubH-4,6); ctx.clip();
-    const lR=phase===0?175:phase===1?130:phase===2?95:155;
+    const lR=riPhase===0?175:riPhase===1?130:riPhase===2?95:155;
     const lG=48+Math.round(algaeIntensity*115);
-    const lB=phase===0?55:phase===1?38:28;
+    const lB=riPhase===0?55:riPhase===1?38:28;
     const lA=0.58+biofilmIntensity*0.18;
     const lq=ctx.createLinearGradient(tubX,liquidTop,tubX+tubW,liquidTop+16);
     lq.addColorStop(0,`rgba(${lR},${lG+18},${lB},${lA})`);
@@ -1060,7 +1355,7 @@ function drawReactorCanvas(phase, pct, p){
     ctx.fillRect(tubX,liquidTop,tubW,tubH-(liquidTop-tubY));
 
     // Sediment layer
-    if(phase===2||phase===3){
+    if(riPhase===2||riPhase===3){
       const sedH=Math.min(32,tubH*0.13*(1+biofilmIntensity));
       const sg=ctx.createLinearGradient(0,tubY+tubH-sedH,0,tubY+tubH);
       sg.addColorStop(0,`rgba(55,85,28,0.0)`);
@@ -1069,9 +1364,9 @@ function drawReactorCanvas(phase, pct, p){
     }
 
     // Aeration bubbles
-    if(phase===1){
+    if(riPhase===1){
       for(let b=0;b<10;b++){
-        const bt=rState.tick*0.045+(b*0.75+ri*0.35);
+        const bt=rs.tick*0.045+(b*0.75+ri*0.35);
         const bx=tubX+6+((b*21)%(tubW-12));
         const by=liquidTop+(tubY+tubH-liquidTop)*(1-(bt%1));
         const br=1.2+((b*7)%4)*0.35;
@@ -1081,9 +1376,9 @@ function drawReactorCanvas(phase, pct, p){
     }
 
     // Feed drops
-    if(phase===0){
+    if(riPhase===0){
       for(let fd=0;fd<3;fd++){
-        const ft=(rState.tick*0.065+fd*0.33)%1;
+        const ft=(rs.tick*0.065+fd*0.33)%1;
         const fdx=tubX+tubW/2+(fd%2===0?-7:7);
         const fdy=tubY+4+ft*(liquidTop-tubY-4);
         ctx.fillStyle='rgba(80,190,255,0.75)';
@@ -1092,22 +1387,22 @@ function drawReactorCanvas(phase, pct, p){
     }
 
     // Discard stream
-    if(phase===3&&pct>0.08){
+    if(riPhase===3&&riPct>0.08){
       const valveY=tubY+tubH*0.62;
       const sideX=ri===0?tubX-1:tubX+tubW+1;
       for(let s=0;s<5;s++){
-        const sy=(rState.tick*3+s*18)%90;
-        ctx.fillStyle=`rgba(${lR},${lG},${lB},${(0.45+pct*0.3)*(1-sy/90)})`;
+        const sy=(rs.tick*3+s*18)%90;
+        ctx.fillStyle=`rgba(${lR},${lG},${lB},${(0.45+riPct*0.3)*(1-sy/90)})`;
         ctx.beginPath();ctx.arc(sideX,valveY+sy,2.2-sy*0.018,0,Math.PI*2);ctx.fill();
       }
     }
 
     // Granule particles
-    const granMat=Math.min(1,rState.granDay/22);
+    const granMat=Math.min(1,rs.granDay/22);
     if(granMat>0.04){
       const numG=Math.floor(granMat*25);
       for(let g=0;g<numG;g++){
-        const gt=rState.tick*0.014+(g*1.8);
+        const gt=rs.tick*0.014+(g*1.8);
         const gx=tubX+6+((g*39)%(tubW-12));
         const gyBase=liquidTop+8+((g*51)%(tubY+tubH-liquidTop-16));
         const gy=gyBase+Math.sin(gt)*2.5;
@@ -1145,7 +1440,7 @@ function drawReactorCanvas(phase, pct, p){
     ];
     valvePos.forEach(v=>{
       const vx=v.side==='left'?tubX-20:tubX+tubW+2;
-      drawValve(ctx,vx,v.y,v.side,phase);
+      drawValve(ctx,vx,v.y,v.side,riPhase);
     });
 
     // Blue silicone tube to pump
@@ -1156,17 +1451,17 @@ function drawReactorCanvas(phase, pct, p){
     ctx.stroke();
 
     // ---- READABLE LABELS ----
-    // Reactor label pill
-    ctx.fillStyle='rgba(20,25,38,0.82)';
+    // Reactor label pill (color-coded: R1=teal, R2=purple)
+    ctx.fillStyle='rgba(20,25,38,0.88)';
     roundRect(ctx,cx-36,tubY+tubH+14,72,14,3);ctx.fill();
-    ctx.fillStyle='#e8ecf8';
+    ctx.fillStyle=ri===0?'#00d4aa':'#b48eff';
     ctx.font='bold 9px JetBrains Mono, monospace';
     ctx.textAlign='center';
     ctx.fillText(r.label, cx, tubY+tubH+24);
 
     // Level % pill — solid dark background, bright text
     const lvlPct=Math.round(liquidFill*100);
-    const lvlCol=phase===1?'#4fffdd':phase===0?'#4fffff':phase===3?'#ffcc44':'#ccddff';
+    const lvlCol=riPhase===1?'#4fffdd':riPhase===0?'#4fffff':riPhase===3?'#ffcc44':'#ccddff';
     ctx.fillStyle='rgba(10,14,26,0.88)';
     roundRect(ctx,cx-18,liquidTop-18,36,14,3);ctx.fill();
     ctx.fillStyle=lvlCol;
@@ -1179,39 +1474,41 @@ function drawReactorCanvas(phase, pct, p){
     const phaseColors=['#00ffcc','#44aaff','#cc88ff','#ffaa22','#8899bb'];
     ctx.fillStyle='rgba(10,14,26,0.88)';
     roundRect(ctx,cx-30,tubY+4,60,13,3);ctx.fill();
-    ctx.fillStyle=phaseColors[phase];
+    ctx.fillStyle=phaseColors[riPhase];
     ctx.font='bold 8px JetBrains Mono, monospace';
     ctx.textAlign='center';
-    ctx.fillText(phaseLabels[phase], cx, tubY+14);
+    ctx.fillText(phaseLabels[riPhase], cx, tubY+14);
   });
 
   // --- PERISTALTIC PUMPS ---
   [120,310].forEach((px,pi)=>{
-    drawPump(ctx,px,H-14,phase,pi);
+    drawPump(ctx,px,H-14,phases[pi]||0,pi);
   });
 
-  // --- Sensor bar at top ---
+  // --- Sensor bar at top (show both reactors' O2) ---
+  const o2R1=phases[0]===1?'6.8':'2.1';
+  const o2R2=phases[1]===1?'6.8':'2.1';
   ctx.fillStyle='rgba(10,14,26,0.88)';
-  roundRect(ctx,W/2-72,2,144,20,4);ctx.fill();
+  roundRect(ctx,W/2-88,2,176,20,4);ctx.fill();
   ctx.fillStyle='#00d4aa';
-  ctx.font='bold 10px JetBrains Mono, monospace';
+  ctx.font='bold 9px JetBrains Mono, monospace';
   ctx.textAlign='center';
-  ctx.fillText(`30°C  pH 7.2  O₂: ${phase===1?'6.8':'2.1'} mg/L`, W/2, 15);
+  ctx.fillText(`30°C · pH 7.2 · O₂ R1:${o2R1} R2:${o2R2} mg/L`, W/2, 15);
 
   // Lighting strip
-  if(rState.lightOn){
+  if(rStates[0].lightOn){
     ctx.fillStyle='rgba(255,242,140,0.55)';ctx.fillRect(44,22,W-88,4);
   } else {
     ctx.fillStyle='rgba(20,45,170,0.35)';ctx.fillRect(44,22,W-88,4);
   }
 
-  drawClock(rState.simHour);
+  drawClock(rStates[0].simHour);
   const td=document.getElementById('simTimeDisplay');
-  if(td) td.textContent=String(rState.simHour).padStart(2,'0')+':00';
+  if(td) td.textContent=String(rStates[0].simHour).padStart(2,'0')+':00';
 
   const gs=document.getElementById('granuleStatus');
   if(gs){
-    const gd=rState.granDay;
+    const gd=rStates[0].granDay;
     gs.textContent=gd<6?'Inóculo':gd<22?'Formando':gd<40?'Jovens':'Maduros';
     gs.style.color=gd<22?'#f5a623':gd<40?'#4f9eff':'#39d353';
   }
@@ -1304,20 +1601,51 @@ function roundRect(ctx,x,y,w,h,r){
 
 function drawReactors(phase, pct){}  // stub — kept for compatibility
 
-function updateReactors(p, result){
-  drawNutrients(p);
-  document.getElementById('ssvDisplay').textContent=p.ssv.toFixed(1)+' g/L';
-  document.getElementById('ivlDisplay').textContent=p.ivl.toFixed(2);
-  updateDiscardLabel();
+function updateReactors(p1, p2, result1, result2){
+  const pr1 = p1 || getReactorParams(0);
+  const pr2 = p2 || getReactorParams(1);
+  drawNutrients(pr1);
+  updateDiscardLabels();
+  // Update biomass displays
+  const s1=document.getElementById('ssvDisplayR1');
+  const s2=document.getElementById('ssvDisplayR2');
+  const i1=document.getElementById('ivlDisplayR1');
+  const i2=document.getElementById('ivlDisplayR2');
+  if(s1) s1.textContent=pr1.ssv.toFixed(1)+' g/L';
+  if(s2) s2.textContent=pr2.ssv.toFixed(1)+' g/L';
+  if(i1) i1.textContent=pr1.ivl.toFixed(2);
+  if(i2) i2.textContent=pr2.ivl.toFixed(2);
+  // Legacy
+  const legSSV=document.getElementById('ssvDisplay');
+  const legIVL=document.getElementById('ivlDisplay');
+  if(legSSV) legSSV.textContent=pr1.ssv.toFixed(1)+' g/L';
+  if(legIVL) legIVL.textContent=pr1.ivl.toFixed(2);
 }
 
-// Kick off canvas animation loop
-(function reactorLoop(){
-  const p = typeof getParams==='function' ? getParams() : {dqoA:450,nh4A:55,ptA:5,alk:400,ssv:1.8,ivl:0.95};
-  const phase = rState.phase||0;
-  const pct2 = rState.pct||0;
-  drawReactorCanvas(phase, pct2, p);
-  requestAnimationFrame(reactorLoop);
+function startReactorLoop(){
+  if(animFrameId) cancelAnimationFrame(animFrameId);
+  function reactorLoop(){
+    if(simPaused){ animFrameId=null; return; } // STOP all animation when paused
+    const phases=[rStates[0].phase||0, rStates[1].phase||0];
+    const pcts=[rStates[0].pct||0, rStates[1].pct||0];
+    const params=[getReactorParams(0), getReactorParams(1)];
+    drawReactorCanvas(phases, pcts, params);
+    animFrameId=requestAnimationFrame(reactorLoop);
+  }
+  reactorLoop();
+}
+
+// Kick off canvas animation loop on load (idle mode — shows reactors but no cycle)
+(function initLoop(){
+  const phases=[0,0];
+  const pcts=[0,0];
+  const params=[getReactorParams(0), getReactorParams(1)];
+  function idleLoop(){
+    if(simRunningState[0]||simRunningState[1]) return; // handoff to startReactorLoop
+    drawReactorCanvas(phases, pcts, params);
+    requestAnimationFrame(idleLoop);
+  }
+  idleLoop();
 })();
 
 // ===== ML OPTIMIZATION =====
@@ -1454,36 +1782,58 @@ function renderDataTable(){
 
 // ===== CONTROLS =====
 function loadRealData(){
-  const p = getParams();
-  const fase = p.fase;
-  const rows = rawData.filter(d=>d.fase===fase&&d.r==='F1').sort((a,b)=>b.day-a.day);
-  if(rows.length===0){log('Sem dados para fase: '+fase,'warn');return;}
-  const r = rows[0];
-  document.getElementById('dqoSlider').value=r.dqoA||400;
-  document.getElementById('nh4Slider').value=r.nh4A||50;
-  document.getElementById('ptSlider').value=r.ptA||5;
-  document.getElementById('ssvSlider').value=r.ssv||1.8;
-  document.getElementById('ivlSlider').value=r.ivl||0.95;
+  // Load R1 data
+  const fase1 = document.getElementById('r1_faseSelect').value;
+  const rows1 = rawData.filter(d=>d.fase===fase1&&d.r==='F1').sort((a,b)=>b.day-a.day);
+  if(rows1.length>0){
+    const r=rows1[0];
+    document.getElementById('r1_dqoSlider').value=r.dqoA||400;
+    document.getElementById('r1_nh4Slider').value=r.nh4A||50;
+    document.getElementById('r1_ptSlider').value=r.ptA||5;
+    if(r.ssv) document.getElementById('r1_ssvSlider').value=r.ssv;
+    if(r.ivl) document.getElementById('r1_ivlSlider').value=r.ivl;
+    log('R1: dados reais carregados — dia '+r.day+' ('+r.fase+')','info');
+  }
+  // Load R2 data
+  const fase2 = document.getElementById('r2_faseSelect').value;
+  const rows2 = rawData.filter(d=>d.fase===fase2&&d.r==='F2').sort((a,b)=>b.day-a.day);
+  if(rows2.length>0){
+    const r=rows2[0];
+    document.getElementById('r2_dqoSlider').value=r.dqoA||400;
+    document.getElementById('r2_nh4Slider').value=r.nh4A||50;
+    document.getElementById('r2_ptSlider').value=r.ptA||5;
+    if(r.ssv) document.getElementById('r2_ssvSlider').value=r.ssv;
+    if(r.ivl) document.getElementById('r2_ivlSlider').value=r.ivl;
+    log('R2: dados reais carregados — dia '+r.day+' ('+r.fase+')','info');
+  }
   updateSliderDisplays();
-  log('Dados reais carregados: dia '+r.day+' ('+r.fase+')','info');
   runSimulation();
 }
 
 function resetAll(){
-  clearInterval(simInterval);
-  simRunning=false;
-  document.getElementById('headerStatus').textContent='● AGUARDANDO';
-  const btn=document.getElementById('btnSimulate');
-  if(btn){btn.textContent='▶ Iniciar Simulação';btn.className='btn btn-primary';}
-  ['kpi-dqo','kpi-nh4','kpi-pt','kpi-no2'].forEach(id=>{
+  stopAllSimulation();
+  ['kpi-dqo','kpi-nh4','kpi-pt','kpi-no2','kpi-dqo-r2','kpi-nh4-r2','kpi-pt-r2','kpi-no2-r2'].forEach(id=>{
     const el=document.getElementById(id);if(el){el.textContent='—';el.style.color='var(--text2)';}
   });
-  document.getElementById('ssvDisplay').textContent='—';
-  document.getElementById('ivlDisplay').textContent='—';
-  document.getElementById('cycleBar').style.width='0%';
+  ['ssvDisplayR1','ssvDisplayR2','ivlDisplayR1','ivlDisplayR2','ssvDisplay','ivlDisplay'].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.textContent='—';
+  });
+  ['r1_cycleBar','r2_cycleBar'].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.style.width='0%';
+  });
+  ['r1_cycleTime','r2_cycleTime'].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.textContent='0 min';
+  });
+  // Reset granule state
+  rStates.forEach(rs=>{rs.granDay=0;rs.biofilm=0;rs.algaeColor=0;rs.tick=0;rs.simMinutes=0;});
   document.getElementById('mlResults').style.display='none';
-  log('Sistema resetado','warn');
-  drawReactors(0,0);
+  log('Sistema resetado — R1 e R2 reinicializados','warn');
+  // Restart idle animation
+  (function idleLoop(){
+    if(simRunningState[0]||simRunningState[1]) return;
+    drawReactorCanvas([0,0],[0,0],[getReactorParams(0),getReactorParams(1)]);
+    requestAnimationFrame(idleLoop);
+  })();
 }
 
 function switchTab(id){
@@ -1514,23 +1864,26 @@ document.querySelectorAll('.tab').forEach(t=>{
 
 // ===== SLIDERS =====
 function updateSliderDisplays(){
-  const map=[['dqoSlider','dqoVal',''],['nh4Slider','nh4Val',''],['ptSlider','ptVal',''],
-    ['alkSlider','alkVal',''],['fillSlider','fillVal',''],['reactSlider','reactVal',''],
-    ['settleSlider','settleVal',''],['decantSlider','decantVal',''],
-    ['ssvSlider','ssvVal',''],['ivlSlider','ivlVal','']];
-  map.forEach(([sid,vid])=>{
-    const s=document.getElementById(sid),v=document.getElementById(vid);
-    if(s&&v)v.textContent=s.value;
+  const fields=['dqo','nh4','pt','alk','fill','react','settle','decant','ssv','ivl'];
+  ['r1','r2'].forEach(rn=>{
+    fields.forEach(f=>{
+      const s=document.getElementById(rn+'_'+f+'Slider');
+      const v=document.getElementById(rn+'_'+f+'Val');
+      if(s&&v) v.textContent=s.value;
+    });
   });
+  updateDiscardLabels();
 }
-document.querySelectorAll('input[type=range]').forEach(s=>{
-  s.addEventListener('input',()=>{
-    updateSliderDisplays();
-    if(simRunning){
-      const p=getParams();
-      const r=predictPerformance(p);
-      updateKPIs(r,p);
-    }
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('input[type=range]').forEach(s=>{
+    s.addEventListener('input',()=>{
+      updateSliderDisplays();
+      if(simRunningState[0]||simRunningState[1]){
+        const p1=getReactorParams(0);const r1=predictPerformance(p1);
+        const p2=getReactorParams(1);const r2=predictPerformance(p2);
+        updateKPIs(r1,p1,r2,p2);
+      }
+    });
   });
 });
 
@@ -1551,14 +1904,19 @@ function log(msg, type=''){
 // ===== INIT =====
 window.addEventListener('load',()=>{
   updateSliderDisplays();
+  updateDiscardLabels();
   initCharts();
   initGranules();
   renderDataTable();
-  log('LSA — Fotobiorreator inicializado','info');
+  // Ensure pause button starts disabled
+  const btnP=document.getElementById('btnPause');
+  if(btnP) btnP.disabled=true;
+  log('LSA — Fotobiorreator R1 + R2 inicializados','info');
   log('Dados experimentais: '+rawData.length+' observações (F1 + F2)','info');
   log('Dias de operação: 6 – 500 (Fases I a IV)','info');
+  log('Parâmetros independentes por reator — abas R1 / R2 na sidebar','info');
   log('Simulação de iluminação 12h/12h ativa','info');
-  log('Pressione "Iniciar Simulação" ou "Otimização por ML"','good');
+  log('Pressione "Iniciar Simulação" para iniciar R1 e R2 simultaneamente','good');
   setTimeout(()=>{ loadRealData(); },600);
 });
 </script>
