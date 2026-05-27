@@ -510,7 +510,8 @@ select:focus{border-color:var(--blue)}
       <div class="tab active" onclick="switchTab('performance')">Desempenho</div>
       <div class="tab" onclick="switchTab('granules')">Grânulos</div>
       <div class="tab" onclick="switchTab('ml')">Otimização ML</div>
-      <!-- <div class="tab" onclick="switchTab('data')">Dados Reais</div> -->
+      <div class="tab" onclick="switchTab('volume')" style="color:var(--cyan)">⚗ Volume & Ciclo</div>
+      <div class="tab" onclick="switchTab('chonps')" style="color:var(--green)">🧬 CHONPS & Efluente</div>
     </div>
 
     <!-- Tab: Performance -->
@@ -619,6 +620,191 @@ select:focus{border-color:var(--blue)}
               </tr>
             </thead>
             <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab: Volume & Ciclo ===== -->
+    <div class="tab-content" id="tab-volume">
+      <!-- Header controls -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">
+          <span class="card-title" style="color:var(--cyan)">⚗ Balanço Volumétrico — Reator 4 L (Escala Laboratorial)</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--text3)">Ciclos/dia:</span>
+            <input type="range" id="cyclesPerDay" min="1" max="8" value="3" step="1" style="width:80px;accent-color:var(--cyan)">
+            <span id="cyclesPerDayVal" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--cyan)">3</span>
+          </div>
+        </div>
+        <!-- Volume balance: R1 and R2 side by side -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem">
+          <!-- R1 Volume Panel -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:14px;border-left:3px solid var(--teal2)">
+            <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">⬤ Reator 1 (R1)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:12px">
+              <div><span style="color:var(--text3);font-size:10px">Volume total</span><br><span style="color:var(--cyan);font-size:1.2rem;font-weight:800">4.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Vol. enchimento</span><br><span id="r1_vfill_disp" style="color:var(--teal);font-size:1.2rem;font-weight:800">2.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Vol. descarte</span><br><span id="r1_vdiscard_disp" style="color:var(--amber);font-size:1.2rem;font-weight:800">2.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Variação/ciclo</span><br><span id="r1_dv_disp" style="font-size:1.2rem;font-weight:800">0.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Estado estável</span><br><span id="r1_steady_disp" style="color:var(--green);font-size:11px;font-weight:700">Estável em 4.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">TRH estimado</span><br><span id="r1_hrt_disp" style="color:var(--blue);font-size:1.1rem;font-weight:800">1.0 d</span></div>
+            </div>
+            <!-- Fill % control for volume simulation -->
+            <div style="margin-bottom:8px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px">% Enchimento (vol. simulação) <span id="r1_fillPct_val" style="color:var(--teal);font-family:'JetBrains Mono',monospace">50</span>%</div>
+              <input type="range" id="r1_fillPct" min="10" max="100" value="50" step="5" style="width:100%;accent-color:var(--teal)">
+            </div>
+            <!-- Visual liquid level bar -->
+            <div style="margin-top:10px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Nível (ciclo atual)</div>
+              <div style="background:var(--border);border-radius:4px;height:24px;position:relative;overflow:hidden">
+                <div id="r1_levelBar" style="height:100%;background:linear-gradient(90deg,var(--teal2),var(--teal));border-radius:4px;width:100%;transition:width 0.5s;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">
+                  <span id="r1_levelPct" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#fff;font-weight:700">4.0 L (100%)</span>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:2px"><span>0 L</span><span>2 L (50%)</span><span>4 L (100%)</span></div>
+            </div>
+          </div>
+          <!-- R2 Volume Panel -->
+          <div style="background:var(--bg);border-radius:var(--r);padding:14px;border-left:3px solid var(--purple2)">
+            <div style="font-size:11px;font-weight:700;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">⬤ Reator 2 (R2)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;font-family:'JetBrains Mono',monospace;margin-bottom:12px">
+              <div><span style="color:var(--text3);font-size:10px">Volume total</span><br><span style="color:var(--cyan);font-size:1.2rem;font-weight:800">4.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Vol. enchimento</span><br><span id="r2_vfill_disp" style="color:var(--purple);font-size:1.2rem;font-weight:800">2.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Vol. descarte</span><br><span id="r2_vdiscard_disp" style="color:var(--amber);font-size:1.2rem;font-weight:800">2.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Variação/ciclo</span><br><span id="r2_dv_disp" style="font-size:1.2rem;font-weight:800">0.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">Estado estável</span><br><span id="r2_steady_disp" style="color:var(--green);font-size:11px;font-weight:700">Estável em 4.0 L</span></div>
+              <div><span style="color:var(--text3);font-size:10px">TRH estimado</span><br><span id="r2_hrt_disp" style="color:var(--blue);font-size:1.1rem;font-weight:800">1.0 d</span></div>
+            </div>
+            <div style="margin-bottom:8px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px">% Enchimento (vol. simulação) <span id="r2_fillPct_val" style="color:var(--purple);font-family:'JetBrains Mono',monospace">50</span>%</div>
+              <input type="range" id="r2_fillPct" min="10" max="100" value="50" step="5" style="width:100%;accent-color:var(--purple)">
+            </div>
+            <div style="margin-top:10px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Nível (ciclo atual)</div>
+              <div style="background:var(--border);border-radius:4px;height:24px;position:relative;overflow:hidden">
+                <div id="r2_levelBar" style="height:100%;background:linear-gradient(90deg,var(--purple2),var(--purple));border-radius:4px;width:100%;transition:width 0.5s;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">
+                  <span id="r2_levelPct" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#fff;font-weight:700">4.0 L (100%)</span>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:2px"><span>0 L</span><span>2 L (50%)</span><span>4 L (100%)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Volume evolution chart -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">
+          <span class="card-title">Evolução do Volume por Ciclo — R1 (verde) e R2 (roxo)</span>
+          <div style="display:flex;gap:8px;font-size:10px;font-family:'JetBrains Mono',monospace">
+            <span style="color:var(--teal)">■ R1 pós-enchimento</span>
+            <span style="color:var(--purple)">■ R2 pós-enchimento</span>
+            <span style="color:var(--amber)">■ pós-descarte</span>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:240px"><canvas id="volumeChart" role="img" aria-label="Volume por ciclo">Volume.</canvas></div>
+      </div>
+      <!-- Cycle parameters table -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Parâmetros Hidráulicos — R1</span></div>
+          <table class="data-table" id="hydroTableR1">
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Parâmetros Hidráulicos — R2</span></div>
+          <table class="data-table" id="hydroTableR2">
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab: CHONPS & Efluente ===== -->
+    <div class="tab-content" id="tab-chonps">
+      <!-- Reactor selector + extra CHONPS inputs -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">
+          <span class="card-title" style="color:var(--green)">🧬 Parâmetros CHONPS — Afluente & Simulação do Efluente</span>
+          <div style="display:flex;gap:4px">
+            <button id="chonpsTabR1" class="rtab-btn r1 active" onclick="selectChonpsTab(1)" style="padding:4px 12px;font-size:11px">⬤ R1</button>
+            <button id="chonpsTabR2" class="rtab-btn r2" onclick="selectChonpsTab(2)" style="padding:4px 12px;font-size:11px">⬤ R2</button>
+          </div>
+        </div>
+        <!-- Extra CHONPS sliders — shown for active reactor -->
+        <div id="chonpsInputsR1">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 0">
+            <div class="param-row"><div class="param-label" style="font-size:11px">DBO₅ af. (mg/L) <span id="r1_dbo5Val" style="color:var(--green)">290</span></div>
+              <input type="range" id="r1_dbo5" min="50" max="500" value="290" step="10" style="accent-color:var(--green)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">SO₄²⁻ af. (mg/L) <span id="r1_sulfateVal" style="color:var(--amber)">30</span></div>
+              <input type="range" id="r1_sulfate" min="0" max="200" value="30" step="5" style="accent-color:var(--amber)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">OD afluente (mg/L) <span id="r1_doVal" style="color:var(--cyan)">0.5</span></div>
+              <input type="range" id="r1_do_in" min="0" max="8" value="0.5" step="0.1" style="accent-color:var(--cyan)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">pH afluente <span id="r1_phVal" style="color:var(--blue)">7.0</span></div>
+              <input type="range" id="r1_ph_in" min="5" max="9" value="7.0" step="0.1" style="accent-color:var(--blue)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">Temperatura (°C) <span id="r1_tempVal" style="color:var(--red)">30</span></div>
+              <input type="range" id="r1_temp" min="15" max="40" value="30" step="1" style="accent-color:var(--red)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">N orgânico (mg/L) <span id="r1_norgVal" style="color:var(--purple)">8</span></div>
+              <input type="range" id="r1_norg" min="0" max="30" value="8" step="1" style="accent-color:var(--purple)"></div>
+          </div>
+        </div>
+        <div id="chonpsInputsR2" style="display:none">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 0">
+            <div class="param-row"><div class="param-label" style="font-size:11px">DBO₅ af. (mg/L) <span id="r2_dbo5Val" style="color:var(--green)">290</span></div>
+              <input type="range" id="r2_dbo5" min="50" max="500" value="290" step="10" style="accent-color:var(--green)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">SO₄²⁻ af. (mg/L) <span id="r2_sulfateVal" style="color:var(--amber)">30</span></div>
+              <input type="range" id="r2_sulfate" min="0" max="200" value="30" step="5" style="accent-color:var(--amber)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">OD afluente (mg/L) <span id="r2_doVal" style="color:var(--cyan)">0.5</span></div>
+              <input type="range" id="r2_do_in" min="0" max="8" value="0.5" step="0.1" style="accent-color:var(--cyan)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">pH afluente <span id="r2_phVal" style="color:var(--blue)">7.0</span></div>
+              <input type="range" id="r2_ph_in" min="5" max="9" value="7.0" step="0.1" style="accent-color:var(--blue)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">Temperatura (°C) <span id="r2_tempVal" style="color:var(--red)">30</span></div>
+              <input type="range" id="r2_temp" min="15" max="40" value="30" step="1" style="accent-color:var(--red)"></div>
+            <div class="param-row"><div class="param-label" style="font-size:11px">N orgânico (mg/L) <span id="r2_norgVal" style="color:var(--purple)">8</span></div>
+              <input type="range" id="r2_norg" min="0" max="30" value="8" step="1" style="accent-color:var(--purple)"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;padding:8px 18px;font-size:12px;display:inline-block;margin-top:4px" onclick="renderCHONPS()">▶ Simular Efluente</button>
+      </div>
+
+      <!-- CHONPS Afluente vs Efluente Table -->
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="card">
+          <div class="card-header"><span class="card-title" style="color:var(--teal)">⬤ R1 — CHONPS Afluente → Efluente</span></div>
+          <div id="chonpsTableR1"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title" style="color:var(--purple)">⬤ R2 — CHONPS Afluente → Efluente</span></div>
+          <div id="chonpsTableR2"></div>
+        </div>
+      </div>
+
+      <!-- Mass balance charts -->
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Balanço de Massa por Ciclo (g/ciclo)</span></div>
+          <div class="chart-wrap" style="height:220px"><canvas id="massBalanceChart" role="img" aria-label="Balanço de massa">Balanço de massa.</canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Eficiências de Remoção R1 vs R2 (%)</span></div>
+          <div class="chart-wrap" style="height:220px"><canvas id="effCompChart" role="img" aria-label="Eficiências comparativas">Eficiências.</canvas></div>
+        </div>
+      </div>
+
+      <!-- Effluent quality summary -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Qualidade do Efluente Final — Comparação R1 vs R2</span></div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="effluentTable">
+            <thead><tr>
+              <th>Elemento</th><th>Parâmetro</th>
+              <th style="color:var(--teal)">Afluente R1</th><th style="color:var(--teal)">Efluente R1</th><th style="color:var(--teal)">η R1 %</th>
+              <th style="color:var(--purple)">Afluente R2</th><th style="color:var(--purple)">Efluente R2</th><th style="color:var(--purple)">η R2 %</th>
+              <th>Unidade</th>
+            </tr></thead>
+            <tbody id="effluentTableBody"></tbody>
           </table>
         </div>
       </div>
@@ -1901,6 +2087,364 @@ function log(msg, type=''){
   while(panel.children.length>50) panel.removeChild(panel.firstChild);
 }
 
+// ===== VOLUME & CICLO TAB =====
+function getChonpsExtra(ri){
+  const p = ri===0 ? 'r1' : 'r2';
+  return {
+    dbo5:    +(document.getElementById(p+'_dbo5')||{value:290}).value,
+    sulfate: +(document.getElementById(p+'_sulfate')||{value:30}).value,
+    do_in:   +(document.getElementById(p+'_do_in')||{value:0.5}).value,
+    ph_in:   +(document.getElementById(p+'_ph_in')||{value:7.0}).value,
+    temp:    +(document.getElementById(p+'_temp')||{value:30}).value,
+    norg:    +(document.getElementById(p+'_norg')||{value:8}).value,
+  };
+}
+
+function calcVolumeBalance(fillPct, discardPct, cyclesPerDay, nCycles=35){
+  const Vtotal = 4.0;
+  const Vfill    = (fillPct/100) * Vtotal;
+  const Vdiscard = (discardPct/100) * Vtotal;
+  const dV = Vfill - Vdiscard;
+
+  // Determine initial working volume (after steady-state first discard)
+  let V = Math.max(0, Math.min(Vtotal, Vtotal*(1 - discardPct/100)));
+  const vAfterFill = [], vAfterDiscard = [+V.toFixed(3)];
+
+  for(let c=0; c<nCycles; c++){
+    const af = Math.min(Vtotal, V + Vfill);
+    const ad = Math.max(0, af - Vdiscard);
+    vAfterFill.push(+af.toFixed(3));
+    V = ad;
+    vAfterDiscard.push(+V.toFixed(3));
+  }
+  vAfterDiscard.pop(); // same length as vAfterFill
+
+  let steadyState, steadyColor;
+  if(Math.abs(dV)<0.001){
+    steadyState=`Estável em ${Vtotal.toFixed(1)} L`;steadyColor='var(--green)';
+  } else if(dV>0){
+    const n=Math.max(1,Math.ceil((Vtotal-vAfterDiscard[0])/dV));
+    steadyState=`Overflow em ~${n} ciclos`;steadyColor='var(--red)';
+  } else {
+    const n=Math.max(1,Math.ceil(vAfterDiscard[0]/Math.abs(dV)));
+    steadyState=`Esvaziamento em ~${n} ciclos`;steadyColor='var(--amber)';
+  }
+  const HRT_days = (Vtotal / Math.max(0.01, Vfill * cyclesPerDay)).toFixed(2);
+  const VER = (discardPct).toFixed(0); // Volumetric Exchange Ratio %
+  const Vflow_day = (Vfill * cyclesPerDay * 1000).toFixed(0); // mL/day
+  const exchangePerDay = (discardPct/100 * cyclesPerDay * 100).toFixed(0);
+
+  return { vAfterFill, vAfterDiscard, Vfill, Vdiscard, dV, steadyState, steadyColor, HRT_days, VER, Vflow_day, Vtotal };
+}
+
+function updateVolumeTab(){
+  const cpd = +(document.getElementById('cyclesPerDay')||{value:3}).value;
+  document.getElementById('cyclesPerDayVal').textContent = cpd;
+
+  [0,1].forEach(ri=>{
+    const rn = ri===0?'r1':'r2';
+    const p = getReactorParams(ri);
+    const fillPct = +(document.getElementById(rn+'_fillPct')||{value:p.discardPct}).value;
+    const discardPct = p.discardPct || 50;
+
+    document.getElementById(rn+'_fillPct_val').textContent = fillPct;
+    const bal = calcVolumeBalance(fillPct, discardPct, cpd);
+
+    document.getElementById(rn+'_vfill_disp').textContent = bal.Vfill.toFixed(2)+' L';
+    document.getElementById(rn+'_vdiscard_disp').textContent = bal.Vdiscard.toFixed(2)+' L';
+    const dvEl = document.getElementById(rn+'_dv_disp');
+    dvEl.textContent = (bal.dV>=0?'+':'')+bal.dV.toFixed(2)+' L';
+    dvEl.style.color = Math.abs(bal.dV)<0.001?'var(--green)':bal.dV>0?'var(--amber)':'var(--red)';
+    const ssEl = document.getElementById(rn+'_steady_disp');
+    ssEl.textContent = bal.steadyState;
+    ssEl.style.color = bal.steadyColor;
+    document.getElementById(rn+'_hrt_disp').textContent = bal.HRT_days+' d';
+
+    // Level bar (last cycle after-fill)
+    const lastFill = bal.vAfterFill[bal.vAfterFill.length-1]||bal.Vtotal;
+    const pct = (lastFill/bal.Vtotal*100).toFixed(0);
+    const bar = document.getElementById(rn+'_levelBar');
+    const lbl = document.getElementById(rn+'_levelPct');
+    if(bar){ bar.style.width=pct+'%'; }
+    if(lbl) lbl.textContent = lastFill.toFixed(2)+' L ('+pct+'%)';
+
+    // Hydro table
+    const tbody = document.querySelector('#hydroTable'+rn.toUpperCase()+' tbody');
+    if(tbody){
+      const cycleTotal = p.fill+p.react+p.settle+p.decant+10;
+      const rows=[
+        ['Volume do reator','4.000 L'],
+        ['Volume enchimento',bal.Vfill.toFixed(3)+' L ('+fillPct+'%)'],
+        ['Volume descarte',bal.Vdiscard.toFixed(3)+' L ('+discardPct+'%)'],
+        ['Variação por ciclo',(bal.dV>=0?'+':'')+bal.dV.toFixed(3)+' L'],
+        ['TRH (hidráulico)',bal.HRT_days+' dias'],
+        ['Carga hidráulica',(bal.Vfill*cpd*1000).toFixed(0)+' mL/dia'],
+        ['Ciclos por dia',cpd],
+        ['Duração do ciclo',cycleTotal+' min'],
+        ['T. enchimento',p.fill+' min'],
+        ['T. reação aeróbia',p.react+' min'],
+        ['T. sedimentação',p.settle+' min'],
+        ['T. descarte',p.decant+' min'],
+        ['Taxa de troca (VER)',discardPct+'%'],
+        ['Estado estável',bal.steadyState],
+      ];
+      tbody.innerHTML = rows.map(r=>`<tr><td style="color:var(--text3)">${r[0]}</td><td style="color:var(--text);font-family:'JetBrains Mono',monospace">${r[1]}</td></tr>`).join('');
+    }
+  });
+
+  // Volume chart
+  const cpd2 = +(document.getElementById('cyclesPerDay')||{value:3}).value;
+  const p1 = getReactorParams(0);
+  const p2 = getReactorParams(1);
+  const fp1 = +(document.getElementById('r1_fillPct')||{value:p1.discardPct}).value;
+  const fp2 = +(document.getElementById('r2_fillPct')||{value:p2.discardPct}).value;
+  const b1 = calcVolumeBalance(fp1, p1.discardPct||50, cpd2);
+  const b2 = calcVolumeBalance(fp2, p2.discardPct||50, cpd2);
+  const labels = Array.from({length:b1.vAfterFill.length},(_,i)=>'C'+i);
+
+  makeChart('volumeChart',{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'R1 pós-enchimento',data:b1.vAfterFill,borderColor:'#00d4aa',backgroundColor:'rgba(0,212,170,0.1)',tension:0.3,fill:true,pointRadius:3,borderWidth:2},
+        {label:'R1 pós-descarte',data:b1.vAfterDiscard,borderColor:'#00d4aa',borderDash:[4,3],tension:0.3,fill:false,pointRadius:2,borderWidth:1.5},
+        {label:'R2 pós-enchimento',data:b2.vAfterFill,borderColor:'#b48eff',backgroundColor:'rgba(181,142,255,0.08)',tension:0.3,fill:true,pointRadius:3,borderWidth:2},
+        {label:'R2 pós-descarte',data:b2.vAfterDiscard,borderColor:'#b48eff',borderDash:[4,3],tension:0.3,fill:false,pointRadius:2,borderWidth:1.5},
+        {label:'Capacidade máx.',data:Array(b1.vAfterFill.length).fill(4.0),borderColor:'rgba(255,95,95,0.4)',borderDash:[8,4],fill:false,pointRadius:0,borderWidth:1},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#8892b0',font:{size:10}}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(2)} L`}}},
+      scales:{
+        x:{ticks:{color:'#4a5580',font:{size:9}},grid:{color:'#1e2538'},title:{display:true,text:'Ciclo',color:'#4a5580',font:{size:10}}},
+        y:{min:0,max:4.5,ticks:{color:'#4a5580',font:{size:10},callback:v=>v+' L'},grid:{color:'#1e2538'},
+          title:{display:true,text:'Volume (L)',color:'#8892b0',font:{size:10}}}
+      }
+    }
+  });
+}
+
+// ===== CHONPS & EFLUENTE TAB =====
+let activeChonpsTab = 1;
+
+function selectChonpsTab(n){
+  activeChonpsTab = n;
+  document.getElementById('chonpsInputsR1').style.display = n===1?'':'none';
+  document.getElementById('chonpsInputsR2').style.display = n===2?'':'none';
+  document.getElementById('chonpsTabR1').classList.toggle('active', n===1);
+  document.getElementById('chonpsTabR2').classList.toggle('active', n===2);
+}
+
+function calcCHONPS(ri){
+  const p = getReactorParams(ri);
+  const ex = getChonpsExtra(ri);
+  const result = predictPerformance(p);
+  const cpd = +(document.getElementById('cyclesPerDay')||{value:3}).value;
+  const fillPct = +(document.getElementById((ri===0?'r1':'r2')+'_fillPct')||{value:p.discardPct}).value;
+  const Vfill_L = (fillPct/100) * 4.0;
+
+  // --- Carbono ---
+  const DQO_af = p.dqoA;
+  const DQO_ef = +(DQO_af*(1-result.dqoEff/100)).toFixed(1);
+  const dqo_eff = result.dqoEff;
+
+  const DBO5_af = +ex.dbo5;
+  const DBO5_ef = +(DQO_ef * 0.35).toFixed(1); // treated BOD low
+  const dbo5_eff = +(100*(1-DBO5_ef/DBO5_af)).toFixed(1);
+
+  const C_af = +(DQO_af/2.67).toFixed(1); // TOC approx
+  const C_ef = +(DQO_ef/2.67).toFixed(1);
+  const c_eff = dqo_eff;
+
+  // --- Nitrogênio ---
+  const N_NH4_af = p.nh4A;
+  const N_NH4_ef = +(N_NH4_af*(1-result.nh4Eff/100)).toFixed(2);
+  const N_org_af = +ex.norg;
+  const N_org_ef = +(N_org_af*0.15).toFixed(2); // ~85% mineralização
+  const N_NO2_ef = +result.no2.toFixed(2);
+  const N_NO3_ef = +(['FASE II','RECALIBRAGEM I'].includes(p.fase)?5.0:2.0).toFixed(1);
+  const N_TKN_af = +(N_NH4_af + N_org_af).toFixed(1);
+  const N_TN_af = N_TKN_af;
+  const N_TN_ef = +(N_NH4_ef + N_org_ef + N_NO2_ef + N_NO3_ef).toFixed(2);
+  const N_tn_eff = +(100*(1-N_TN_ef/N_TN_af)).toFixed(1);
+
+  // --- Fósforo ---
+  const P_af = p.ptA;
+  const P_ef = +(P_af*(1-result.ptEff/100)).toFixed(2);
+  const p_eff = result.ptEff;
+
+  // --- Enxofre ---
+  const S_SO4_af = +ex.sulfate;
+  // SO4 slightly consumed in anoxic/micro-aerophilic zones
+  const S_SO4_ef = +(S_SO4_af * (p.fase==='FASE III'||p.fase==='FASE IV' ? 0.78 : 0.88)).toFixed(1);
+  const s_eff = +(100*(1-S_SO4_ef/Math.max(1,S_SO4_af))).toFixed(1);
+
+  // --- Oxigênio/Alcalinidade/pH ---
+  const DO_af = +ex.do_in;
+  const DO_ef = 2.1; // aerobic effluent
+  const Alk_af = p.alk;
+  // Nitrification consumes ~7.14 g CaCO3 per g NH4-N oxidized
+  const Alk_consumed = Math.min(Alk_af*0.6, (N_NH4_af - N_NH4_ef)*7.14);
+  const Alk_ef = +(Alk_af - Alk_consumed).toFixed(0);
+  const alk_eff = +(100*(Alk_af-Alk_ef)/Alk_af).toFixed(1);
+  const pH_af = +ex.ph_in;
+  const pH_ef = +(7.0 + (Alk_ef>200?0.3:0) + (result.nh4Eff>70?0.1:0)).toFixed(1);
+  const temp = +ex.temp;
+
+  // --- Mass per cycle (mg/cycle) ---
+  const massIn  = v => v * Vfill_L;  // mg/L × L = mg
+  const massOut = v => v * (p.discardPct/100) * 4.0; // mg/L × V_discard
+
+  return {
+    rows:[
+      {el:'C', param:'DQO total',      af:DQO_af,  ef:DQO_ef,  eff:dqo_eff,    unit:'mg/L'},
+      {el:'C', param:'DBO₅',           af:DBO5_af, ef:DBO5_ef, eff:dbo5_eff,   unit:'mg/L'},
+      {el:'C', param:'C orgânico (TOC)',af:C_af,   ef:C_ef,    eff:c_eff,       unit:'mg C/L'},
+      {el:'N', param:'NH₄-N',          af:N_NH4_af,ef:N_NH4_ef,eff:result.nh4Eff,unit:'mg N/L'},
+      {el:'N', param:'N orgânico',     af:N_org_af, ef:N_org_ef, eff:+((1-N_org_ef/Math.max(1,N_org_af))*100).toFixed(1),unit:'mg N/L'},
+      {el:'N', param:'NO₂⁻-N (formado)',af:0,      ef:N_NO2_ef,eff:'—',         unit:'mg N/L'},
+      {el:'N', param:'NO₃⁻-N (formado)',af:0,      ef:N_NO3_ef,eff:'—',         unit:'mg N/L'},
+      {el:'N', param:'N total (TN)',   af:N_TN_af, ef:N_TN_ef, eff:N_tn_eff,   unit:'mg N/L'},
+      {el:'P', param:'PT total',       af:P_af,    ef:P_ef,    eff:p_eff,       unit:'mg P/L'},
+      {el:'S', param:'SO₄²⁻',         af:S_SO4_af,ef:S_SO4_ef,eff:s_eff,      unit:'mg SO₄/L'},
+      {el:'O', param:'OD (oxig. diss.)',af:DO_af,  ef:DO_ef,   eff:'—',         unit:'mg O₂/L'},
+      {el:'H', param:'Alcalinidade',   af:Alk_af,  ef:Alk_ef,  eff:alk_eff,    unit:'mg CaCO₃/L'},
+      {el:'—', param:'pH',             af:pH_af,   ef:pH_ef,   eff:'—',         unit:'unid.'},
+      {el:'—', param:'Temperatura',    af:temp,    ef:temp,    eff:'—',         unit:'°C'},
+    ],
+    massIn, massOut, Vfill_L, discardPct:p.discardPct, result,
+    // Key arrays for chart
+    labels:['DQO','DBO₅','NH₄-N','PT','SO₄²⁻','Alk.'],
+    in_vals:[DQO_af,DBO5_af,N_NH4_af,P_af,S_SO4_af,Alk_af],
+    out_vals:[+DQO_ef,+DBO5_ef,+N_NH4_ef,+P_ef,+S_SO4_ef,+Alk_ef],
+    eff_vals:[dqo_eff,dbo5_eff,result.nh4Eff,p_eff,+s_eff,+alk_eff],
+  };
+}
+
+function chonpsRowHTML(row, ri){
+  const effNum = parseFloat(row.eff);
+  const effColor = isNaN(effNum)?'var(--text3)':effNum>85?'var(--green)':effNum>60?'var(--amber)':'var(--red)';
+  const elColor = {C:'#00e5ff',N:'#4f9eff',P:'#b48eff',S:'#f5a623',O:'#39d353',H:'#8892b0','—':'#4a5580'}[row.el]||'#8892b0';
+  return `<tr>
+    <td><span style="background:${elColor}22;color:${elColor};padding:2px 6px;border-radius:3px;font-weight:700;font-family:'JetBrains Mono',monospace">${row.el}</span></td>
+    <td style="color:var(--text2)">${row.param}</td>
+    <td style="font-family:'JetBrains Mono',monospace;color:${ri===0?'var(--teal)':'var(--purple)'}">${row.af}</td>
+    <td style="font-family:'JetBrains Mono',monospace;color:var(--text)">${row.ef}</td>
+    <td style="font-family:'JetBrains Mono',monospace;color:${effColor};font-weight:700">${isNaN(effNum)?row.eff:effNum+'%'}</td>
+    <td style="color:var(--text3);font-size:10px">${row.unit}</td>
+  </tr>`;
+}
+
+function renderCHONPS(){
+  const c1 = calcCHONPS(0);
+  const c2 = calcCHONPS(1);
+
+  // Tables
+  ['r1','r2'].forEach((rn,ri)=>{
+    const el = document.getElementById('chonpsTable'+rn.toUpperCase()+(ri===0?'1':'2'));
+    // Actually use chonpsTableR1 / chonpsTableR2
+    const elx = document.getElementById('chonpsTableR'+(ri+1));
+    if(!elx) return;
+    const data = ri===0?c1:c2;
+    elx.innerHTML = `<table class="data-table" style="width:100%">
+      <thead><tr>
+        <th style="width:32px">Elem.</th><th>Parâmetro</th>
+        <th style="color:${ri===0?'var(--teal)':'var(--purple)'}">Afluente</th>
+        <th>Efluente</th><th>Remoção</th><th>Unidade</th>
+      </tr></thead>
+      <tbody>${data.rows.map(r=>chonpsRowHTML(r,ri)).join('')}</tbody>
+    </table>`;
+  });
+
+  // Mass balance chart (mg/ciclo → g/dia if ×cpd/1000)
+  const cpd = +(document.getElementById('cyclesPerDay')||{value:3}).value;
+  const toGd = (v, Vfill) => +(v * Vfill * cpd / 1000).toFixed(3); // mg/L → g/day
+
+  makeChart('massBalanceChart',{
+    type:'bar',
+    data:{
+      labels:c1.labels,
+      datasets:[
+        {label:'Entrada R1 (g/d)',data:c1.in_vals.map((v,i)=>toGd(v,c1.Vfill_L)),backgroundColor:'rgba(0,212,170,0.7)',borderRadius:3},
+        {label:'Saída R1 (g/d)',  data:c1.out_vals.map((v,i)=>toGd(v,c1.discardPct/100*4)),backgroundColor:'rgba(0,212,170,0.25)',borderRadius:3},
+        {label:'Entrada R2 (g/d)',data:c2.in_vals.map((v,i)=>toGd(v,c2.Vfill_L)),backgroundColor:'rgba(181,142,255,0.7)',borderRadius:3},
+        {label:'Saída R2 (g/d)',  data:c2.out_vals.map((v,i)=>toGd(v,c2.discardPct/100*4)),backgroundColor:'rgba(181,142,255,0.25)',borderRadius:3},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#8892b0',font:{size:9}}}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},
+              y:{ticks:{color:'#4a5580',font:{size:10},callback:v=>v+' g/d'},grid:{color:'#1e2538'}}}
+    }
+  });
+
+  // Efficiency comparison chart
+  makeChart('effCompChart',{
+    type:'bar',
+    data:{
+      labels:c1.labels,
+      datasets:[
+        {label:'Remoção R1 (%)',data:c1.eff_vals,backgroundColor:'rgba(0,212,170,0.75)',borderRadius:4},
+        {label:'Remoção R2 (%)',data:c2.eff_vals,backgroundColor:'rgba(181,142,255,0.75)',borderRadius:4},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#8892b0',font:{size:10}}}},
+      scales:{x:{ticks:{color:'#4a5580',font:{size:10}},grid:{color:'#1e2538'}},
+              y:{min:0,max:110,ticks:{color:'#4a5580',font:{size:10},callback:v=>v+'%'},grid:{color:'#1e2538'},
+                title:{display:true,text:'Eficiência de remoção (%)',color:'#8892b0',font:{size:10}}}}
+    }
+  });
+
+  // Effluent comparison table
+  const tbody = document.getElementById('effluentTableBody');
+  if(tbody){
+    const rows1 = c1.rows; const rows2 = c2.rows;
+    tbody.innerHTML = rows1.map((r,i)=>{
+      const r2 = rows2[i]||{af:'—',ef:'—',eff:'—'};
+      const e1 = parseFloat(r.eff); const e2 = parseFloat(r2.eff);
+      const ec1 = isNaN(e1)?'var(--text3)':e1>85?'var(--green)':e1>60?'var(--amber)':'var(--red)';
+      const ec2 = isNaN(e2)?'var(--text3)':e2>85?'var(--green)':e2>60?'var(--amber)':'var(--red)';
+      const elColor = {C:'#00e5ff',N:'#4f9eff',P:'#b48eff',S:'#f5a623',O:'#39d353',H:'#8892b0','—':'#4a5580'}[r.el]||'#8892b0';
+      return `<tr>
+        <td><span style="background:${elColor}22;color:${elColor};padding:2px 5px;border-radius:3px;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px">${r.el}</span></td>
+        <td>${r.param}</td>
+        <td style="color:var(--teal);font-family:'JetBrains Mono',monospace">${r.af}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${r.ef}</td>
+        <td style="color:${ec1};font-weight:700;font-family:'JetBrains Mono',monospace">${isNaN(e1)?r.eff:e1+'%'}</td>
+        <td style="color:var(--purple);font-family:'JetBrains Mono',monospace">${r2.af}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${r2.ef}</td>
+        <td style="color:${ec2};font-weight:700;font-family:'JetBrains Mono',monospace">${isNaN(e2)?r2.eff:e2+'%'}</td>
+        <td style="color:var(--text3);font-size:11px">${r.unit}</td>
+      </tr>`;
+    }).join('');
+  }
+  log('CHONPS: efluente simulado para R1 e R2','info');
+}
+
+// CHONPS extra sliders event listeners setup
+function setupChonpsListeners(){
+  const fields=['dbo5','sulfate','do_in','ph_in','temp','norg'];
+  const vals  =['dbo5Val','sulfateVal','doVal','phVal','tempVal','norgVal'];
+  ['r1','r2'].forEach(rn=>{
+    fields.forEach((f,i)=>{
+      const s = document.getElementById(rn+'_'+f);
+      const v = document.getElementById(rn+'_'+vals[i]);
+      if(s&&v) s.addEventListener('input',()=>{ v.textContent=s.value; });
+    });
+  });
+  // Volume tab controls
+  const cpd = document.getElementById('cyclesPerDay');
+  if(cpd) cpd.addEventListener('input', updateVolumeTab);
+  ['r1_fillPct','r2_fillPct'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', updateVolumeTab);
+  });
+}
+
 // ===== INIT =====
 window.addEventListener('load',()=>{
   updateSliderDisplays();
@@ -1911,13 +2455,15 @@ window.addEventListener('load',()=>{
   // Ensure pause button starts disabled
   const btnP=document.getElementById('btnPause');
   if(btnP) btnP.disabled=true;
+  setupChonpsListeners();
+  updateVolumeTab();
   log('LSA — Fotobiorreator R1 + R2 inicializados','info');
   log('Dados experimentais: '+rawData.length+' observações (F1 + F2)','info');
   log('Dias de operação: 6 – 500 (Fases I a IV)','info');
   log('Parâmetros independentes por reator — abas R1 / R2 na sidebar','info');
   log('Simulação de iluminação 12h/12h ativa','info');
   log('Pressione "Iniciar Simulação" para iniciar R1 e R2 simultaneamente','good');
-  setTimeout(()=>{ loadRealData(); },600);
+  setTimeout(()=>{ loadRealData(); renderCHONPS(); },1200);
 });
 </script>
 </body>
