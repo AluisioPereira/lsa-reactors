@@ -177,9 +177,12 @@ select:focus{border-color:var(--blue)}
 <body>
 
 <div class="header">
+  <div class="logo">
+    <img src="./LSA.png" alt="Logo LSA" width="50" height="80" style="margin-right:5px">
+  </div>
   <div>
-    <div class="logo"><span>LSA</span> · Sistema de Simulação de Reatores em Batelada Sequencial</div>
-    <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px">Experimento (tese): Elissadra Pereira</div>
+    <div class="logo" style="font-size:20px;color:var(--text4);font-family:'JetBrains Mono',monospace;margin-top:2px"><span>LSA</span> · Sistema de Simulação de Reatores em Batelada Sequencial</div>
+    <div style="font-size:14px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:2px">Experimento (tese): <strong>Elissandra Pereira</strong></div>
   </div>
   <div class="header-badges">
     <span class="badge badge-phase" id="headerPhase">FASE I</span>
@@ -2160,13 +2163,13 @@ function updateVolumeTab(){
     ssEl.style.color = bal.steadyColor;
     document.getElementById(rn+'_hrt_disp').textContent = bal.HRT_days+' d';
 
-    // Level bar (last cycle after-fill)
-    const lastFill = bal.vAfterFill[bal.vAfterFill.length-1]||bal.Vtotal;
-    const pct = (lastFill/bal.Vtotal*100).toFixed(0);
+    // Level bar — volume de enchimento por ciclo refletido diretamente no slider
+    const levelL = bal.Vfill;
+    const pct = fillPct;
     const bar = document.getElementById(rn+'_levelBar');
     const lbl = document.getElementById(rn+'_levelPct');
-    if(bar){ bar.style.width=pct+'%'; }
-    if(lbl) lbl.textContent = lastFill.toFixed(2)+' L ('+pct+'%)';
+    if(bar){ bar.style.width = Math.min(100, pct)+'%'; }
+    if(lbl) lbl.textContent = levelL.toFixed(2)+' L ('+pct+'%)';
 
     // Hydro table
     const tbody = document.querySelector('#hydroTable'+rn.toUpperCase()+' tbody');
@@ -2326,14 +2329,34 @@ function calcCHONPS(ri){
 
 function chonpsRowHTML(row, ri){
   const effNum = parseFloat(row.eff);
-  const effColor = isNaN(effNum)?'var(--text3)':effNum>85?'var(--green)':effNum>60?'var(--amber)':'var(--red)';
+  // Paleta por reator: R1 família teal/verde, R2 família roxa/rosa
+  // Cada faixa usa uma cor diferente por reator — nunca idênticas entre R1 e R2
+  let effColor, effBg;
+  if(isNaN(effNum)){
+    // Valor "—" → tom suave da cor do reator
+    effColor = ri===0 ? 'rgba(0,212,170,0.55)' : 'rgba(181,142,255,0.55)';
+    effBg    = ri===0 ? 'rgba(0,212,170,0.08)' : 'rgba(181,142,255,0.08)';
+  } else if(effNum > 85){
+    // Alta remoção: R1=teal vivo, R2=roxo vivo
+    effColor = ri===0 ? '#00d4aa' : '#b48eff';
+    effBg    = ri===0 ? 'rgba(0,212,170,0.12)' : 'rgba(181,142,255,0.12)';
+  } else if(effNum > 60){
+    // Remoção média: R1=amarelo-esverdeado, R2=laranja-rosado
+    effColor = ri===0 ? '#a3e635' : '#fb923c';
+    effBg    = ri===0 ? 'rgba(163,230,53,0.10)' : 'rgba(251,146,60,0.10)';
+  } else {
+    // Baixa remoção: R1=vermelho-coral, R2=rosa-magenta
+    effColor = ri===0 ? '#f87171' : '#f472b6';
+    effBg    = ri===0 ? 'rgba(248,113,113,0.12)' : 'rgba(244,114,182,0.12)';
+  }
   const elColor = {C:'#00e5ff',N:'#4f9eff',P:'#b48eff',S:'#f5a623',O:'#39d353',H:'#8892b0','—':'#4a5580'}[row.el]||'#8892b0';
+  const rColor  = ri===0 ? 'var(--teal)' : 'var(--purple)';
   return `<tr>
     <td><span style="background:${elColor}22;color:${elColor};padding:2px 6px;border-radius:3px;font-weight:700;font-family:'JetBrains Mono',monospace">${row.el}</span></td>
     <td style="color:var(--text2)">${row.param}</td>
-    <td style="font-family:'JetBrains Mono',monospace;color:${ri===0?'var(--teal)':'var(--purple)'}">${row.af}</td>
+    <td style="font-family:'JetBrains Mono',monospace;color:${rColor}">${row.af}</td>
     <td style="font-family:'JetBrains Mono',monospace;color:var(--text)">${row.ef}</td>
-    <td style="font-family:'JetBrains Mono',monospace;color:${effColor};font-weight:700">${isNaN(effNum)?row.eff:effNum+'%'}</td>
+    <td style="font-family:'JetBrains Mono',monospace;color:${effColor};font-weight:700;background:${effBg};border-radius:4px;padding:1px 5px">${isNaN(effNum)?row.eff:effNum+'%'}</td>
     <td style="color:var(--text3);font-size:10px">${row.unit}</td>
   </tr>`;
 }
