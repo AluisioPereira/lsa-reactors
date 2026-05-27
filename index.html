@@ -262,6 +262,10 @@ select:focus{border-color:var(--blue)}
             <option value="75">75%</option><option value="100">100%</option>
           </select>
         </div>
+        <div class="param-row">
+          <div class="param-label">Vol. enchimento <span id="r1_targetFillVal" style="color:var(--teal);font-family:'JetBrains Mono',monospace">100</span>%</div>
+          <input type="range" id="r1_targetFillSlider" min="10" max="100" value="100" step="5" style="accent-color:var(--teal)">
+        </div>
       </div>
 
       <!-- ===== REATOR 2 PANEL ===== -->
@@ -324,6 +328,10 @@ select:focus{border-color:var(--blue)}
             <option value="25">25%</option><option value="50" selected>50%</option>
             <option value="75">75%</option><option value="100">100%</option>
           </select>
+        </div>
+        <div class="param-row">
+          <div class="param-label">Vol. enchimento <span id="r2_targetFillVal" style="color:var(--purple);font-family:'JetBrains Mono',monospace">100</span>%</div>
+          <input type="range" id="r2_targetFillSlider" min="10" max="100" value="100" step="5" style="accent-color:var(--purple)">
         </div>
       </div>
 
@@ -1107,7 +1115,8 @@ function getReactorParams(ri){
     ssv: +document.getElementById(p+'_ssvSlider').value,
     ivl: +document.getElementById(p+'_ivlSlider').value,
     fase: document.getElementById(p+'_faseSelect').value,
-    discardPct: +document.getElementById(p+'_discardSelect').value
+    discardPct: +document.getElementById(p+'_discardSelect').value,
+    fillTargetPct: +((document.getElementById(p+'_targetFillSlider')||{value:100}).value)
   };
 }
 
@@ -1125,7 +1134,7 @@ function selectRtab(ri){
 
 // Clone R1 → R2
 function syncR1toR2(){
-  const fields=['dqoSlider','nh4Slider','ptSlider','alkSlider','fillSlider','reactSlider','settleSlider','decantSlider','ssvSlider','ivlSlider'];
+  const fields=['dqoSlider','nh4Slider','ptSlider','alkSlider','fillSlider','reactSlider','settleSlider','decantSlider','ssvSlider','ivlSlider','targetFillSlider'];
   fields.forEach(f=>{
     const v = document.getElementById('r1_'+f).value;
     document.getElementById('r2_'+f).value = v;
@@ -1312,6 +1321,7 @@ function animateCycle(p, ri){
     rStates[ri].pct=phaseElapsed/Math.max(1,times[phaseIdx]);
     rStates[ri].simMinutes+=2;
     rStates[ri].discardPct=p.discardPct||50;
+    rStates[ri].fillTargetPct=p.fillTargetPct||100;
     // Update KPIs live when params change
     if(elapsed%20===0){
       const pr=getReactorParams(ri);
@@ -1332,7 +1342,7 @@ function makeReactorState(){
     simHour: 0, lightOn: true,
     granDay: 0, granules: [],
     bubbles: [], feedDrops: [],
-    discardStream: false, discardPct: 50,
+    discardStream: false, discardPct: 50, fillTargetPct: 100,
     biofilm: 0, algaeColor: 0,
     tick: 0, simMinutes: 0
   };
@@ -1379,6 +1389,18 @@ function updateDiscardLabels(){
 }
 // Backward compat
 function updateDiscardLabel(){ updateDiscardLabels(); }
+
+function updateFillTargetLabels(){
+  [0,1].forEach(ri=>{
+    const rn=ri===0?'r1':'r2';
+    const el=document.getElementById(rn+'_targetFillSlider');
+    if(!el) return;
+    const v=+el.value;
+    rStates[ri].fillTargetPct=v;
+    const dv=document.getElementById(rn+'_targetFillVal');
+    if(dv) dv.textContent=v;
+  });
+}
 
 function drawNutrientsPanel(p, elId){
   const el=document.getElementById(elId);
@@ -1490,9 +1512,11 @@ function drawReactorCanvas(phases, pcts, params){
     const riPhase = phases[ri]||0;
     const riPct = pcts[ri]||0;
     const discardFrac = rs.discardPct/100;
-    const liquidFill = riPhase===0 ? 0.32+riPct*0.33
-                     : riPhase===3 ? Math.max(0.18, 0.65-riPct*discardFrac*0.65)
-                     : 0.65;
+    const fillTarget = (rs.fillTargetPct||100)/100;
+    const startLevel = fillTarget * (1 - discardFrac);
+    const liquidFill = riPhase===0 ? startLevel + riPct*(fillTarget - startLevel)
+                     : riPhase===3 ? Math.max(fillTarget*0.12, fillTarget - riPct*discardFrac*fillTarget)
+                     : fillTarget;
     const liquidTop = tubY + tubH*(1-liquidFill);
     const algaeIntensity = rs.algaeColor;
     const biofilmIntensity = rs.biofilm;
@@ -2053,7 +2077,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
 // ===== SLIDERS =====
 function updateSliderDisplays(){
-  const fields=['dqo','nh4','pt','alk','fill','react','settle','decant','ssv','ivl'];
+  const fields=['dqo','nh4','pt','alk','fill','react','settle','decant','ssv','ivl','targetFill'];
   ['r1','r2'].forEach(rn=>{
     fields.forEach(f=>{
       const s=document.getElementById(rn+'_'+f+'Slider');
@@ -2067,6 +2091,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('input[type=range]').forEach(s=>{
     s.addEventListener('input',()=>{
       updateSliderDisplays();
+      updateFillTargetLabels();
       if(simRunningState[0]||simRunningState[1]){
         const p1=getReactorParams(0);const r1=predictPerformance(p1);
         const p2=getReactorParams(1);const r2=predictPerformance(p2);
@@ -2074,6 +2099,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     });
   });
+  // Init fill target state from slider defaults
+  updateFillTargetLabels();
 });
 
 // ===== LOG =====
