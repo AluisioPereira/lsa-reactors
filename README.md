@@ -225,6 +225,23 @@ O sistema possui um modelo de Machine Learning treinado com os dados experimenta
 - Tabela filtrável dos reatores F1/F2
 - Codificação por cores baseada em performance
 
+
+## Aba ⚗ Volume & Ciclo
+- Balanço volumétrico R1 e R2 lado a lado — Vol. enchimento, Vol. descarte, Variação/ciclo (verde = estável, âmbar = crescendo, vermelho = esvaziando), TRH estimado
+- Slider "% Enchimento" — independente para R1 e R2, simula quanto volume entra por ciclo
+- Barra de nível visual — mostra o nível atual do reator (R1 verde, R2 roxo) com rótulo "X.XX L (Y%)"
+- Gráfico de evolução do volume por ciclo — 4 linhas: pós-enchimento e pós-descarte para R1 e R2, com linha de capacidade máxima
+- Tabelas de parâmetros hidráulicos — R1 e R2 com 14 linhas cada (TRH, carga hidráulica, ciclos/dia, tempos de fase, taxa de troca, estado estável)
+- Slider Ciclos/dia — afeta TRH e carga hidráulica de ambos reatores
+
+## Aba 🧬 CHONPS & Efluente
+- Sliders afluente adicionais — DBO₅, SO₄²⁻, OD, pH, Temperatura, N orgânico (independentes R1/R2 via abas R1/R2)
+- Botão "▶ Simular Efluente" — calcula e renderiza tudo imediatamente
+- Tabelas CHONPS R1 e R2 — 14 linhas com elementos C, N, P, S, O, H, mostrando Afluente → Efluente → Eficiência (colorida: verde ≥85%, âmbar ≥60%, vermelho <60%)
+- Gráfico Balanço de Massa — entradas e saídas em g/dia para R1 e R2 (barras comparativas)
+- Gráfico Eficiências de Remoção — R1 vs R2 em %, para DQO, DBO₅, NH₄-N, PT, SO₄²⁻, Alcalinidade
+- Tabela comparativa R1 vs R2 — afluente, efluente e eficiência de ambos os reatores lado a lado
+
 ---
 
 # Tecnologias Utilizadas
